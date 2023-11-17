@@ -41,6 +41,8 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDir
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
+import org.firstinspires.ftc.vision.apriltag.AprilTagMetadata;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import android.util.Size;
 import java.util.List;
@@ -127,16 +129,49 @@ public class VisionTest1 extends LinearOpMode {
      */
     private void initAprilTag() {
 
-        // Create the AprilTag processor.
-        aprilTag = new AprilTagProcessor.Builder()
+        // Create the AprilTag processor
+        AprilTagMetadata RedBack;
+        AprilTagMetadata RedFront;
+        AprilTagMetadata LeftBack;
+        AprilTagMetadata LeftFront;
+
+
+        AprilTagLibrary.Builder myAprilTagLibraryBuilder;
+        AprilTagProcessor.Builder myAprilTagProcessorBuilder;
+        AprilTagLibrary myAprilTagLibrary;
+
+        myAprilTagLibraryBuilder = new AprilTagLibrary.Builder();
+        myAprilTagLibraryBuilder.addTags(AprilTagGameDatabase.getCurrentGameTagLibrary());
+        RedBack = new AprilTagMetadata(372, "RB", 3.5, DistanceUnit.INCH);
+        RedFront = new AprilTagMetadata(477, "RF", 3.5, DistanceUnit.INCH);
+        LeftBack = new AprilTagMetadata(119, "LB", 3.5, DistanceUnit.INCH);
+        LeftFront = new AprilTagMetadata(249, "LF", 3.5, DistanceUnit.INCH);
+
+        myAprilTagLibraryBuilder.addTag(RedBack);
+        myAprilTagLibraryBuilder.addTag(RedFront);
+        myAprilTagLibraryBuilder.addTag(LeftBack);
+        myAprilTagLibraryBuilder.addTag(LeftFront);
+
+
+        myAprilTagLibrary = myAprilTagLibraryBuilder.build();
+        myAprilTagProcessorBuilder = new AprilTagProcessor.Builder();
+        myAprilTagProcessorBuilder.setTagLibrary(myAprilTagLibrary);
+        aprilTag = myAprilTagProcessorBuilder
+                .setDrawAxes(true)
+                .setDrawTagOutline(true)
+                .setDrawTagID(true)
+                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                .setOutputUnits(DistanceUnit.INCH,AngleUnit.DEGREES)
+                .build();
+
 
                 // The following default settings are available to un-comment and edit as needed.
-                .setDrawAxes(false)
-                .setDrawCubeProjection(false)
-                .setDrawTagOutline(true)
-                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
-                .setOutputUnits(DistanceUnit.INCH,AngleUnit.DEGREES)
+                //.setDrawAxes(true)
+               // .setDrawCubeProjection(true)
+               // .setDrawTagOutline(true)
+
+//                .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+//                .setOutputUnits(DistanceUnit.INCH,AngleUnit.DEGREES)
 
                 // == CAMERA CALIBRATION ==
                 // If you do not manually specify calibration parameters, the SDK will attempt
@@ -144,7 +179,7 @@ public class VisionTest1 extends LinearOpMode {
                 //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
                 // ... these parameters are fx, fy, cx, cy.
 
-                .build();
+
 
         // Adjust Image Decimation to trade-off detection-range for detection-rate.
         // eg: Some typical detection data using a Logitech C920 WebCam
@@ -201,15 +236,15 @@ public class VisionTest1 extends LinearOpMode {
 
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
-            }
+
+            telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+            telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+            telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+            telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+//             else {
+//                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+//                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+//            }
         }   // end for() loop
 
         // Add "key" information to telemetry

@@ -35,6 +35,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
@@ -49,6 +51,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
+import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
+import org.firstinspires.ftc.vision.apriltag.AprilTagMetadata;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
@@ -83,10 +87,14 @@ import java.util.List;
 public class TestingEncoder extends LinearOpMode {
     private static final boolean USE_WEBCAM = true;
     /* Declare OpMode members. */
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
+    private DcMotor BackRight = null;
+    private DcMotor BackLeft = null;
+    private DcMotor FrontRight = null;
+    private DcMotor FrontLeft = null;
+    private DcMotor ArmMotor = null;
+    private DcMotor Worm = null;
+    Servo ArmServo;
+  private int Moved = 0;
     IMU imu;
     private ElapsedTime     runtime = new ElapsedTime();
     private AprilTagProcessor aprilTag;
@@ -105,11 +113,30 @@ public class TestingEncoder extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.2;
     static final double     TURN_SPEED              = 0.5;
-    boolean isRed = false;
     @Override
     public void runOpMode() {
 
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+//        List<AprilTagDetection> currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+//
+//        // Check if currentDetections is not null and not empty
+//        if (currentDetections != null && !currentDetections.isEmpty()) {
+//            int detectionCount = 0;
+//            for (AprilTagDetection detection : currentDetections) {
+//                detectionCount++;
+//
+//                // Display x, y, z values for each detection
+//                telemetry.addData("Detection " + detectionCount, "X: %.2f, Y: %.2f, Z: %.2f inches",
+//                        detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
+//
+//                // ... additional processing for each detection if needed
+//            }
+//
+//            telemetry.addData("Total Detections", detectionCount);
+//
+//        } else {
+//            telemetry.addData("No AprilTags Detected", " ");
+//        }
+        
         initAprilTag();
         imu = hardwareMap.get(IMU.class, "imu");
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
@@ -133,18 +160,7 @@ public class TestingEncoder extends LinearOpMode {
         } else {
             telemetry.addData("Yaw", "Press Y (triangle) on Gamepad to reset\n");
         }
-        for (AprilTagDetection detection : currentDetections) {
 
-            if (detection.id ==10||detection.id==9) {
-                isRed = true;
-            }
-
-
-                if (detection.id ==7||detection.id==8) {
-                    isRed = false;
-
-                }
-            }
         // Retrieve Rotational Angles and Velocities
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
@@ -160,71 +176,104 @@ public class TestingEncoder extends LinearOpMode {
 
 
         // Initialize the drive system variables.
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "left_back_drive");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
+        FrontLeft  = hardwareMap.get(DcMotor.class, "FrontLeft");
+        BackLeft  = hardwareMap.get(DcMotor.class, "BackLeft");
+        FrontRight = hardwareMap.get(DcMotor.class, "FrontRight");
+        BackRight = hardwareMap.get(DcMotor.class, "BackRight");
+        ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
+        Worm = hardwareMap.get(DcMotor.class, "Worm");
+        ArmServo = hardwareMap.get(Servo.class, "ArmServo");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        FrontLeft.setDirection(DcMotor.Direction.FORWARD);
+        FrontRight.setDirection(DcMotor.Direction.REVERSE);
+        BackLeft.setDirection(DcMotor.Direction.FORWARD);
+        BackRight.setDirection(DcMotor.Direction.REVERSE);
 
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         // Send telemetry message to indicate successful Encoder reset
-        telemetry.addData("Starting at",  "%7d :%7d",
-                leftFrontDrive.getCurrentPosition(),
-                rightFrontDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(),
-                rightBackDrive.getCurrentPosition());
-        //telemetry.addData("inches per",  "%7d :%7d",COUNTS_PER_INCH);
-        telemetry.update();
+//        telemetry.addData("Starting at",  "%7d :%7d",
+//                FrontLeft.getCurrentPosition(),
+//                FrontRight.getCurrentPosition(), BackLeft.getCurrentPosition(),
+//                BackRight.getCurrentPosition());
+//        //telemetry.addData("inches per",  "%7d :%7d",COUNTS_PER_INCH);
+//        telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
-        double distance = 12;
-        double adjust = .75;
-        double move = distance*adjust;
+
+
+
+        while (opModeIsActive()) {
+
+            List<AprilTagDetection> currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+
+            // Check if currentDetections is not null and not empty
+            if (currentDetections != null && !currentDetections.isEmpty()) {
+                int detectionCount = 0;  // Counter for the number of detections
+                //if (Moved==0) {
+                for (AprilTagDetection detection : currentDetections) {
+                    // Process each detection
+                    detectionCount++;
+
+                    // Display x, y, z values for each detection
+                    telemetry.addData("Detection " + detectionCount + " (ID " + detection.id + ")",
+                            "X: %.2f, Y: %.2f, Z: %.2f inches",
+                            detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
+
+                    // ... additional processing for each detection if needed
+
+                        if (detection.id == 477) {//RedFrontStage
+                            //if (detection.ftcPose.x > 0) {
+                            double distance = 20;
+                            double adjust = .75;
+                            double move = distance * adjust;
+                            ArmDrive(DRIVE_GEAR_REDUCTION, 0, 1, 5.0);// for worm: 1 unit = 2.25 degrees
+                            //  encoderDrive(DRIVE_SPEED, move, move, 5.0);
+                            Moved = 1;
+                            break;
+                            //}
+                        }
+                        if (detection.id == 372) {//RedBackStage
+
+                        }
+                        if (detection.id == 249) {//BlueFrontStage
+
+                        }
+                        if (detection.id == 119) {//BlueBackStage
+
+                        }
+                   // }
+                }
+
+                telemetry.addData("Total Detections", detectionCount);
+            } else {
+                telemetry.addData("No AprilTags Detected", " ");
+            }
+
+            telemetry.update();  // Update telemetry
+        }
+
+
+
+
 
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         //encoderDrive(DRIVE_SPEED,  move,  move, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-        driveTurn(90,false,1.0,5.0);
+       // driveTurn(90,false,1.0,5.0);
         //encoderDrive(TURN_SPEED,   turn, -turn, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
         // encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
-        for (AprilTagDetection detection : currentDetections) {
-            if(isRed) {
-                if (detection.id == 477) {//right
 
-                }
-                if (detection.id == 372) {//center
-
-                }
-                if (detection.id == 249) {//left
-
-                }
-            }
-            else {
-                if (detection.id == 477) {//left
-
-                }
-                if (detection.id == 372) {//center
-
-                }
-                if (detection.id == 249) {//right
-
-                }
-            }
-        }
 
 
         telemetry.addData("Path", "Complete");
@@ -252,24 +301,24 @@ public class TestingEncoder extends LinearOpMode {
 
 
             // Determine new target position, and pass to motor controller
-            newLeftTarget = leftFrontDrive.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = rightFrontDrive.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            newLeftTarget = FrontLeft.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = FrontRight.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
 
-            leftFrontDrive.setTargetPosition(newLeftTarget);
-            rightFrontDrive.setTargetPosition(newRightTarget);
-            leftBackDrive.setTargetPosition(newLeftTarget);
-            rightBackDrive.setTargetPosition(newRightTarget);
+            FrontLeft.setTargetPosition(newLeftTarget);
+            FrontRight.setTargetPosition(newRightTarget);
+            BackLeft.setTargetPosition(newLeftTarget);
+            BackRight.setTargetPosition(newRightTarget);
             // Turn On RUN_TO_POSITION
-            leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            BackLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            BackRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            FrontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            FrontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             // reset the timeout time and start motion.
             runtime.reset();
-            leftFrontDrive.setPower(Math.abs(speed));
-            rightFrontDrive.setPower(Math.abs(speed));
-            leftBackDrive.setPower(Math.abs(speed));
-            rightBackDrive.setPower(Math.abs(speed));
+            FrontLeft.setPower(Math.abs(speed));
+            FrontRight.setPower(Math.abs(speed));
+            BackLeft.setPower(Math.abs(speed));
+            BackRight.setPower(Math.abs(speed));
 
             // keep looping while we are still active, and there is time left, and both motors are running.
             // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
@@ -279,28 +328,76 @@ public class TestingEncoder extends LinearOpMode {
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
-                    (leftFrontDrive.isBusy() && rightFrontDrive.isBusy())) {
+                    (FrontLeft.isBusy() && FrontRight.isBusy())) {
                 telemetryAprilTag();
                 // Display it for the driver.
                 telemetry.addData("Running to",  " %7d :%7d", newLeftTarget,  newRightTarget);
                 telemetry.addData("Currently at",  " at %7d :%7d",
-                        leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition(),leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
+                        FrontLeft.getCurrentPosition(), FrontRight.getCurrentPosition(),BackLeft.getCurrentPosition(), BackRight.getCurrentPosition());
 
                 telemetry.update();
             }
 
             // Stop all motion;
-            leftBackDrive.setPower(0);
-            rightBackDrive.setPower(0);
-            leftFrontDrive.setPower(0);
-            rightFrontDrive.setPower(0);
+            BackLeft.setPower(0);
+            BackRight.setPower(0);
+            FrontLeft.setPower(0);
+            FrontRight.setPower(0);
             // Turn off RUN_TO_POSITION
-            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            BackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             sleep(250);   // optional pause after each move.
+        }
+        visionPortal.close();
+    }
+    public void ArmDrive(double speed,
+                             double wormRotate, double extend,
+                             double timeoutS) {
+        int newWormTarget;
+        int newExtendTarget;
+
+        // Ensure that the OpMode is still active
+        if (opModeIsActive()) {
+
+
+            // Determine new target position, and pass to motor controller
+            newWormTarget = Worm.getCurrentPosition() + (int)(wormRotate/2.25 * COUNTS_PER_INCH);
+            newExtendTarget = ArmMotor.getCurrentPosition() + (int)(extend * COUNTS_PER_INCH);
+
+            Worm.setTargetPosition(newWormTarget);
+            ArmMotor.setTargetPosition(newExtendTarget);
+
+            // Turn On RUN_TO_POSITION
+            Worm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            ArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+           // runtime.reset();
+            Worm.setPower(Math.abs(speed));
+            ArmMotor.setPower(Math.abs(speed));
+
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+
+
+            // Stop all motion;
+            Worm.setPower(0);
+            ArmMotor.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+           Worm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+            //sleep(250);   // optional pause after each move.
         }
         visionPortal.close();
     }
@@ -316,22 +413,38 @@ public class TestingEncoder extends LinearOpMode {
     private void initAprilTag() {
 
         // Create the AprilTag processor.
-        aprilTag = new AprilTagProcessor.Builder()
+        AprilTagMetadata RedBack;
+        AprilTagMetadata RedFront;
+        AprilTagMetadata LeftBack;
+        AprilTagMetadata LeftFront;
 
-                // The following default settings are available to un-comment and edit as needed.
-                .setDrawAxes(false)
-                .setDrawCubeProjection(false)
+
+        AprilTagLibrary.Builder myAprilTagLibraryBuilder;
+        AprilTagProcessor.Builder myAprilTagProcessorBuilder;
+        AprilTagLibrary myAprilTagLibrary;
+
+        myAprilTagLibraryBuilder = new AprilTagLibrary.Builder();
+        myAprilTagLibraryBuilder.addTags(AprilTagGameDatabase.getCurrentGameTagLibrary());
+        RedBack = new AprilTagMetadata(372, "RB", 3.5, DistanceUnit.INCH);
+        RedFront = new AprilTagMetadata(477, "RF", 3.5, DistanceUnit.INCH);
+        LeftBack = new AprilTagMetadata(119, "LB", 3.5, DistanceUnit.INCH);
+        LeftFront = new AprilTagMetadata(249, "LF", 3.5, DistanceUnit.INCH);
+
+        myAprilTagLibraryBuilder.addTag(RedBack);
+        myAprilTagLibraryBuilder.addTag(RedFront);
+        myAprilTagLibraryBuilder.addTag(LeftBack);
+        myAprilTagLibraryBuilder.addTag(LeftFront);
+
+
+        myAprilTagLibrary = myAprilTagLibraryBuilder.build();
+        myAprilTagProcessorBuilder = new AprilTagProcessor.Builder();
+        myAprilTagProcessorBuilder.setTagLibrary(myAprilTagLibrary);
+        aprilTag = myAprilTagProcessorBuilder
+                .setDrawAxes(true)
                 .setDrawTagOutline(true)
+                .setDrawTagID(true)
                 .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
                 .setOutputUnits(DistanceUnit.INCH,AngleUnit.DEGREES)
-
-                // == CAMERA CALIBRATION ==
-                // If you do not manually specify calibration parameters, the SDK will attempt
-                // to load a predefined calibration for your camera.
-                //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
-                // ... these parameters are fx, fy, cx, cy.
-
                 .build();
 
         // Adjust Image Decimation to trade-off detection-range for detection-rate.
@@ -357,15 +470,15 @@ public class TestingEncoder extends LinearOpMode {
         //builder.setCameraResolution(sz);
         builder.setCameraResolution(new Size(640,480));
         // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
-        builder.enableLiveView(true);
+        //builder.enableLiveView(true);
 
         // Set the stream format; MJPEG uses less bandwidth than default YUY2.
-        builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+       // builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
 
         // Choose whether or not LiveView stops if no processors are enabled.
         // If set "true", monitor shows solid orange screen if no processors enabled.
         // If set "false", monitor shows camera view without annotations.
-        builder.setAutoStopLiveView(false);
+       // builder.setAutoStopLiveView(false);
 
         // Set and enable the processor.
         builder.addProcessor(aprilTag);

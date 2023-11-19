@@ -102,6 +102,7 @@ public class TestingEncoder extends LinearOpMode {
     private int DetectID = 0;
     IMU imu;
     private final ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime timeFrom = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
@@ -221,8 +222,8 @@ public class TestingEncoder extends LinearOpMode {
         waitForStart();
 
 
-        while (opModeIsActive() && !Moved&&!AlreadyDetect) {
-
+        while (opModeIsActive() && !Moved && !AlreadyDetect) {
+            timeFrom.startTime();
             List<AprilTagDetection> currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
 //            driveTurn(45, false, 1.0, 5.0);
 //            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
@@ -233,18 +234,18 @@ public class TestingEncoder extends LinearOpMode {
             //  Check if currentDetections is not null and not empty
             sleep(5000);
 
-                driveTurn(45,true, 1.0, 5.0);
-                sleep(5000);
-                currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
-                if (currentDetections != null && !currentDetections.isEmpty()) {
-                    for (AprilTagDetection detection : currentDetections) {
-                        if (detection.id == 477) {
-                            DetectID=477;
+            driveTurn(45, true, 1.0, 5.0);
+            sleep(5000);
+            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+            if (currentDetections != null && !currentDetections.isEmpty()) {
+                for (AprilTagDetection detection : currentDetections) {
+                    if (detection.id == 477) {
+                        DetectID = 477;
 
-                        }
                     }
-                    driveTurn(45,false, 1.0, 5.0);
                 }
+                driveTurn(45, false, 1.0, 5.0);
+            }
 
 
             if (currentDetections != null && !currentDetections.isEmpty()) {
@@ -262,157 +263,35 @@ public class TestingEncoder extends LinearOpMode {
 
                     // ... additional processing for each detection if needed
 
-                    if (detection.id == 477) {//RedFrontStage
 
-                       // DetectID = 477;
-
-                        telemetry.addData("DETECT", "477");
-                        telemetry.update();
-                        if(DetectID==477) {
-                            ClawServoL.setPosition(-1);
-                            ClawServoR.setPosition(1);
-                            double distance1 = 20;
-                            double adjust = .75;
-                            double move1 = distance1 * adjust;
-                            encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
-                            driveTurn(85, true, 1.0, 5.0);
-                            encoderDrive(DRIVE_SPEED, -10 * .75, -10 * .75, 5.0);
-
-                            ArmMotor.setPower(1);
-                            sleep(2000);
-                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                            ArmServo.setPosition(.6);
-                            sleep(2000);
-                            ClawServoR.setPosition(.5);
-                            sleep(500);
-                            ArmServo.setPosition(1);
-                            ArmMotor.setPower(-1);
-                            sleep(1000);
-                            ArmMotor.setPower(0);
-                            // for worm: 1 unit = 2.25 degrees
-                            driveTurn(160, false, 1.0, 5.0);
-                            double distance2 = 19;
-                            double move2 = distance2 * adjust;
-                            encoderDrive(DRIVE_SPEED, move2, move2, 5.0);
-                            driveTurn(85, false, 1.0, 5.0);
-                            double distance3 = 15;
-                            double move3 = distance3 * adjust;
-                            encoderDrive(DRIVE_SPEED, move3, move3, 5.0);
-                            driveTurn(90, true, 1.0, 5.0);
-                            double distance4 = 7;
-                            double move4 = distance4 * adjust;
-                            encoderDrive(DRIVE_SPEED, move4, move4, 5.0);
-                            ArmMotor.setPower(1);
-                            sleep(500);
-                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                            ArmServo.setPosition(.6);
-                            sleep(2000);
-                            ClawServoL.setPosition(.5);
-                            sleep(500);
-                            ArmServo.setPosition(1);
-                            ArmMotor.setPower(-1);
-                            sleep(1000);
-                            ArmMotor.setPower(0);
-
-                            Moved = true;
-                            break;
-                        }
-                        if (detection.ftcPose.x <2 ) {
-                            ClawServoL.setPosition(-1);
-                            ClawServoR.setPosition(1);
-                            encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
-                            driveTurn(15, false, 1.0, 5.0);
-                            ArmMotor.setPower(1);
-                            sleep(2000);
-                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                            ArmServo.setPosition(.6);
-                            sleep(2000);
-                            ClawServoR.setPosition(.5);
-                            sleep(500);
-                            ArmServo.setPosition(1);
-                            ArmMotor.setPower(-1);
-                            sleep(1000);
-                            ArmMotor.setPower(0);
-                            driveTurn(15, true, 1.0, 5.0);
-                            encoderDrive(DRIVE_SPEED, -15 * .75, -15 * .75, 5.0);
-                            driveTurn(87, false, 1.0, 5.0);
-                            encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
-                            ArmMotor.setPower(1);
-                            sleep(500);
-                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                            ArmServo.setPosition(.6);
-                            sleep(2000);
-                            ClawServoL.setPosition(.5);
-                            sleep(500);
-                            ArmServo.setPosition(1);
-                            ArmMotor.setPower(-1);
-                            sleep(1000);
-                            ArmMotor.setPower(0);
-
-                            Moved = true;
-                            break;
-
-                        }
-                        if (detection.ftcPose.x >4.5) {
-                            ClawServoL.setPosition(-1);
-                            ClawServoR.setPosition(1);
-                            encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
-                            driveTurn(87.5, false, 1.0, 5.0);
-                            encoderDrive(DRIVE_SPEED, -10.5 * .75, -10.5 * .75, 5.0);
-                            ArmMotor.setPower(1);
-                            sleep(2000);
-                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-                            ArmServo.setPosition(.6);
-                            sleep(2000);
-                            ClawServoR.setPosition(.5);
-                            sleep(500);
-                            ArmServo.setPosition(1);
-                            ArmMotor.setPower(-1);
-                            sleep(1000);
-                            ArmMotor.setPower(0);
-                            encoderDrive(DRIVE_SPEED, 8 * .75, 8 * .75, 5.0);
-                            driveTurn(90, false, 1.0, 5.0);
-                            encoderDrive(DRIVE_SPEED, 17 * .75, 17 * .75, 5.0);
-                            driveTurn(94, true, 1.0, 5.0);
-                            encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
-                            ArmMotor.setPower(1);
-                            sleep(500);
-                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                            ArmServo.setPosition(.6);
-                            sleep(2000);
-                            ClawServoL.setPosition(.5);
-                            sleep(500);
-                            ArmServo.setPosition(1);
-                            ArmMotor.setPower(-1);
-                            sleep(1000);
-                            ArmMotor.setPower(0);
-                            encoderDrive(DRIVE_SPEED, 3.5 * .75, 3.5 * .75, 5.0);
-                            Moved = true;
-                            break;
-                        }
-
-                        AlreadyDetect = true;
-                        Moved = true;
-                        //}
+                    AlreadyDetect = true;
+                    Moved = true;
+                    //}
+                    if (detection.id == 477) {//RedBackStage
+                        AutoMove(477, (int) detection.ftcPose.x, false);
                     }
-                    if (detection.id == 372) {//RedBackStage
 
+                    if (detection.id == 372) {//BlueBackStage
+                        AutoMove(372, (int) detection.ftcPose.x, false);
                     }
                     if (detection.id == 249) {//BlueFrontStage
 
                     }
-                    if (detection.id == 119) {//BlueBackStage
+                    if (detection.id == 119) {//RedBackStage
 
                     }
                     // }
                 }
 
+
                 telemetry.addData("Total Detections", detectionCount);
+            } else {
+                assert currentDetections != null;
+                timeFrom.seconds();
+                driveTurn(45, true, 1.0, 5.0);
+                currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+                AutoMove(currentDetections.get(1).id, (int) currentDetections.get(1).ftcPose.x, true);
+
             }
 
 
@@ -506,6 +385,291 @@ public class TestingEncoder extends LinearOpMode {
             sleep(250);   // optional pause after each move.
         }
         visionPortal.close();
+    }
+
+    public void AutoMove(int ID, int XPos, boolean HasRot) {
+        if (!Moved) {
+            if (ID == 477) {//RedFrontStage
+
+                // DetectID = 477;
+
+                telemetry.addData("DETECT", "477");
+                telemetry.update();
+                if (HasRot) {
+
+                    ClawServoL.setPosition(-1);
+                    ClawServoR.setPosition(1);
+                    driveTurn(45, false, 1.0, 5.0);
+                    double distance1 = 20;
+                    double adjust = .75;
+                    double move1 = distance1 * adjust;
+                    encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
+                    driveTurn(85, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, -10 * .75, -10 * .75, 5.0);
+
+                    ArmMotor.setPower(1);
+                    sleep(2000);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoR.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    // for worm: 1 unit = 2.25 degrees
+                    driveTurn(160, false, 1.0, 5.0);
+                    double distance2 = 19;
+                    double move2 = distance2 * adjust;
+                    encoderDrive(DRIVE_SPEED, move2, move2, 5.0);
+                    driveTurn(85, false, 1.0, 5.0);
+                    double distance3 = 15;
+                    double move3 = distance3 * adjust;
+                    encoderDrive(DRIVE_SPEED, move3, move3, 5.0);
+                    driveTurn(90, true, 1.0, 5.0);
+                    double distance4 = 7;
+                    double move4 = distance4 * adjust;
+                    encoderDrive(DRIVE_SPEED, move4, move4, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(500);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoL.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+
+                    Moved = true;
+                    // break;
+                }
+                if (XPos < 2) {
+                    ClawServoL.setPosition(-1);
+                    ClawServoR.setPosition(1);
+                    encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
+                    driveTurn(15, false, 1.0, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(2000);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoR.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    driveTurn(15, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, -15 * .75, -15 * .75, 5.0);
+                    driveTurn(87, false, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(500);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoL.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+
+                    Moved = true;
+                    //break;
+
+                }
+                if (XPos > 4.5) {
+                    ClawServoL.setPosition(-1);
+                    ClawServoR.setPosition(1);
+                    encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
+                    driveTurn(87.5, false, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, -10.5 * .75, -10.5 * .75, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(2000);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoR.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    encoderDrive(DRIVE_SPEED, 8 * .75, 8 * .75, 5.0);
+                    driveTurn(90, false, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 17 * .75, 17 * .75, 5.0);
+                    driveTurn(94, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(500);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoL.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    encoderDrive(DRIVE_SPEED, 3.5 * .75, 3.5 * .75, 5.0);
+                    Moved = true;
+                    // break;
+                }
+
+                AlreadyDetect = true;
+                Moved = true;
+                //}
+            }
+            if (ID == 372) {//RedFrontStage
+
+                // DetectID = 477;
+
+                telemetry.addData("DETECT", "477");
+                telemetry.update();
+                if (HasRot) {
+
+                    ClawServoL.setPosition(-1);
+                    ClawServoR.setPosition(1);
+                    driveTurn(45, false, 1.0, 5.0);
+                    double distance1 = 20;
+                    double adjust = .75;
+                    double move1 = distance1 * adjust;
+                    encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
+                    driveTurn(85, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, -10 * .75, -10 * .75, 5.0);
+
+                    ArmMotor.setPower(1);
+                    sleep(2000);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoR.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    // for worm: 1 unit = 2.25 degrees
+                    driveTurn(90, true, 1.0, 5.0);
+                    double distance2 = 15;
+                    double move2 = distance2 * adjust;
+                    encoderDrive(DRIVE_SPEED, move2, move2, 5.0);
+                    driveTurn(85, true, 1.0, 5.0);
+                    double distance3 = 15;
+                    double move3 = distance3 * adjust;
+//                    encoderDrive(DRIVE_SPEED, move3, move3, 5.0);
+//                    driveTurn(90, true, 1.0, 5.0);
+//                    double distance4 = 7;
+//                    double move4 = distance4 * adjust;
+//                    encoderDrive(DRIVE_SPEED, move4, move4, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(500);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoL.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+
+                    Moved = true;
+                    // break;
+                }
+                if (XPos < 2) {
+                    ClawServoL.setPosition(-1);
+                    ClawServoR.setPosition(1);
+                    encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
+                    driveTurn(15, false, 1.0, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(2000);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoR.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    driveTurn(15, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, -15 * .75, -15 * .75, 5.0);
+                    driveTurn(87, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(500);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoL.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+
+                    Moved = true;
+                    //break;
+
+                }
+                if (XPos > 4.5) {
+                    ClawServoL.setPosition(-1);
+                    ClawServoR.setPosition(1);
+                    encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
+                    driveTurn(87.5, false, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, -10.5 * .75, -10.5 * .75, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(2000);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoR.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    encoderDrive(DRIVE_SPEED, 8 * .75, 8 * .75, 5.0);
+                    driveTurn(90, false, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 17 * .75, 17 * .75, 5.0);
+                    driveTurn(94, false, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                    ArmMotor.setPower(1);
+                    sleep(500);
+                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                    ArmServo.setPosition(.6);
+                    sleep(2000);
+                    ClawServoL.setPosition(.5);
+                    sleep(500);
+                    ArmServo.setPosition(1);
+                    ArmMotor.setPower(-1);
+                    sleep(1000);
+                    ArmMotor.setPower(0);
+                    encoderDrive(DRIVE_SPEED, 3.5 * .75, 3.5 * .75, 5.0);
+                    Moved = true;
+                    // break;
+                }
+
+                AlreadyDetect = true;
+                Moved = true;
+                //}
+            }
+        }
     }
 
     public void ArmDrive(double speed,

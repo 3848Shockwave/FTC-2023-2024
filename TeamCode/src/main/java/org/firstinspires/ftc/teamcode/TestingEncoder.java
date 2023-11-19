@@ -41,6 +41,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 import com.qualcomm.robotcore.hardware.IMU;
+import com.sun.tools.javac.comp.Check;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -82,7 +83,7 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Robot: Auto", group="Robot")
+@Autonomous(name = "Robot: Auto", group = "Robot")
 
 public class TestingEncoder extends LinearOpMode {
     private static final boolean USE_WEBCAM = true;
@@ -94,9 +95,13 @@ public class TestingEncoder extends LinearOpMode {
     private DcMotor ArmMotor = null;
     private DcMotor Worm = null;
     Servo ArmServo;
-  private int Moved = 0;
+    Servo ClawServoR;
+    Servo ClawServoL;
+    private boolean Moved = false;
+    private boolean AlreadyDetect = false;
+    private int DetectID = 0;
     IMU imu;
-    private ElapsedTime     runtime = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
@@ -106,17 +111,18 @@ public class TestingEncoder extends LinearOpMode {
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double     COUNTS_PER_MOTOR_REV    = 25.5 ;    // eg: TETRIX Motor Encoder
-    static final double     DRIVE_GEAR_REDUCTION    = 20.0 ;     // No External Gearing.
-    static final double     WHEEL_DIAMETER_INCHES   = 3.6 ;     // For figuring circumference 3.9 works
-    static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+    static final double COUNTS_PER_MOTOR_REV = 25.5;    // eg: TETRIX Motor Encoder
+    static final double DRIVE_GEAR_REDUCTION = 20.0;     // No External Gearing.
+    static final double WHEEL_DIAMETER_INCHES = 3.6;     // For figuring circumference 3.9 works
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double     DRIVE_SPEED             = 0.2;
-    static final double     TURN_SPEED              = 0.5;
+    static final double DRIVE_SPEED = 0.2;
+    static final double TURN_SPEED = 0.5;
+
     @Override
     public void runOpMode() {
 
-//        List<AprilTagDetection> currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+
 //
 //        // Check if currentDetections is not null and not empty
 //        if (currentDetections != null && !currentDetections.isEmpty()) {
@@ -136,11 +142,11 @@ public class TestingEncoder extends LinearOpMode {
 //        } else {
 //            telemetry.addData("No AprilTags Detected", " ");
 //        }
-        
+
         initAprilTag();
         imu = hardwareMap.get(IMU.class, "imu");
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
 
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
 
@@ -176,13 +182,15 @@ public class TestingEncoder extends LinearOpMode {
 
 
         // Initialize the drive system variables.
-        FrontLeft  = hardwareMap.get(DcMotor.class, "FrontLeft");
-        BackLeft  = hardwareMap.get(DcMotor.class, "BackLeft");
+        FrontLeft = hardwareMap.get(DcMotor.class, "FrontLeft");
+        BackLeft = hardwareMap.get(DcMotor.class, "BackLeft");
         FrontRight = hardwareMap.get(DcMotor.class, "FrontRight");
         BackRight = hardwareMap.get(DcMotor.class, "BackRight");
         ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
         Worm = hardwareMap.get(DcMotor.class, "Worm");
         ArmServo = hardwareMap.get(Servo.class, "ArmServo");
+        ClawServoR = hardwareMap.get(Servo.class, "ClawServoR");
+        ClawServoL = hardwareMap.get(Servo.class, "ClawServoL");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -191,6 +199,7 @@ public class TestingEncoder extends LinearOpMode {
         FrontRight.setDirection(DcMotor.Direction.REVERSE);
         BackLeft.setDirection(DcMotor.Direction.FORWARD);
         BackRight.setDirection(DcMotor.Direction.REVERSE);
+        ArmMotor.setDirection(DcMotor.Direction.REVERSE);
 
         BackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -212,16 +221,37 @@ public class TestingEncoder extends LinearOpMode {
         waitForStart();
 
 
-
-        while (opModeIsActive()) {
+        while (opModeIsActive() && !Moved&&!AlreadyDetect) {
 
             List<AprilTagDetection> currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+//            driveTurn(45, false, 1.0, 5.0);
+//            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+//            sleep(2000);
+//            driveTurn(90, true, 1.0, 5.0);
+//            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+//            sleep(2000);
+            //  Check if currentDetections is not null and not empty
+            sleep(5000);
 
-            // Check if currentDetections is not null and not empty
+                driveTurn(45,true, 1.0, 5.0);
+                sleep(5000);
+                currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
+                if (currentDetections != null && !currentDetections.isEmpty()) {
+                    for (AprilTagDetection detection : currentDetections) {
+                        if (detection.id == 477) {
+                            DetectID=477;
+
+                        }
+                    }
+                    driveTurn(45,false, 1.0, 5.0);
+                }
+
+
             if (currentDetections != null && !currentDetections.isEmpty()) {
                 int detectionCount = 0;  // Counter for the number of detections
                 //if (Moved==0) {
                 for (AprilTagDetection detection : currentDetections) {
+                    sleep(1000);
                     // Process each detection
                     detectionCount++;
 
@@ -232,53 +262,177 @@ public class TestingEncoder extends LinearOpMode {
 
                     // ... additional processing for each detection if needed
 
-                        if (detection.id == 477) {//RedFrontStage
-                            //if (detection.ftcPose.x > 0) {
-                            double distance = 20;
+                    if (detection.id == 477) {//RedFrontStage
+
+                       // DetectID = 477;
+
+                        telemetry.addData("DETECT", "477");
+                        telemetry.update();
+                        if(DetectID==477) {
+                            ClawServoL.setPosition(-1);
+                            ClawServoR.setPosition(1);
+                            double distance1 = 20;
                             double adjust = .75;
-                            double move = distance * adjust;
-                            ArmDrive(DRIVE_GEAR_REDUCTION, 0, 1, 5.0);// for worm: 1 unit = 2.25 degrees
-                            //  encoderDrive(DRIVE_SPEED, move, move, 5.0);
-                            Moved = 1;
+                            double move1 = distance1 * adjust;
+                            encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
+                            driveTurn(85, true, 1.0, 5.0);
+                            encoderDrive(DRIVE_SPEED, -10 * .75, -10 * .75, 5.0);
+
+                            ArmMotor.setPower(1);
+                            sleep(2000);
+                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                            ArmServo.setPosition(.6);
+                            sleep(2000);
+                            ClawServoR.setPosition(.5);
+                            sleep(500);
+                            ArmServo.setPosition(1);
+                            ArmMotor.setPower(-1);
+                            sleep(1000);
+                            ArmMotor.setPower(0);
+                            // for worm: 1 unit = 2.25 degrees
+                            driveTurn(160, false, 1.0, 5.0);
+                            double distance2 = 19;
+                            double move2 = distance2 * adjust;
+                            encoderDrive(DRIVE_SPEED, move2, move2, 5.0);
+                            driveTurn(85, false, 1.0, 5.0);
+                            double distance3 = 15;
+                            double move3 = distance3 * adjust;
+                            encoderDrive(DRIVE_SPEED, move3, move3, 5.0);
+                            driveTurn(90, true, 1.0, 5.0);
+                            double distance4 = 7;
+                            double move4 = distance4 * adjust;
+                            encoderDrive(DRIVE_SPEED, move4, move4, 5.0);
+                            ArmMotor.setPower(1);
+                            sleep(500);
+                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                            ArmServo.setPosition(.6);
+                            sleep(2000);
+                            ClawServoL.setPosition(.5);
+                            sleep(500);
+                            ArmServo.setPosition(1);
+                            ArmMotor.setPower(-1);
+                            sleep(1000);
+                            ArmMotor.setPower(0);
+
+                            Moved = true;
                             break;
-                            //}
                         }
-                        if (detection.id == 372) {//RedBackStage
+                        if (detection.ftcPose.x <2 ) {
+                            ClawServoL.setPosition(-1);
+                            ClawServoR.setPosition(1);
+                            encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
+                            driveTurn(15, false, 1.0, 5.0);
+                            ArmMotor.setPower(1);
+                            sleep(2000);
+                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                            ArmServo.setPosition(.6);
+                            sleep(2000);
+                            ClawServoR.setPosition(.5);
+                            sleep(500);
+                            ArmServo.setPosition(1);
+                            ArmMotor.setPower(-1);
+                            sleep(1000);
+                            ArmMotor.setPower(0);
+                            driveTurn(15, true, 1.0, 5.0);
+                            encoderDrive(DRIVE_SPEED, -15 * .75, -15 * .75, 5.0);
+                            driveTurn(87, false, 1.0, 5.0);
+                            encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                            ArmMotor.setPower(1);
+                            sleep(500);
+                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+
+                            ArmServo.setPosition(.6);
+                            sleep(2000);
+                            ClawServoL.setPosition(.5);
+                            sleep(500);
+                            ArmServo.setPosition(1);
+                            ArmMotor.setPower(-1);
+                            sleep(1000);
+                            ArmMotor.setPower(0);
+
+                            Moved = true;
+                            break;
 
                         }
-                        if (detection.id == 249) {//BlueFrontStage
+                        if (detection.ftcPose.x >4.5) {
+                            ClawServoL.setPosition(-1);
+                            ClawServoR.setPosition(1);
+                            encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
+                            driveTurn(87.5, false, 1.0, 5.0);
+                            encoderDrive(DRIVE_SPEED, -10.5 * .75, -10.5 * .75, 5.0);
+                            ArmMotor.setPower(1);
+                            sleep(2000);
+                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
+                            ArmServo.setPosition(.6);
+                            sleep(2000);
+                            ClawServoR.setPosition(.5);
+                            sleep(500);
+                            ArmServo.setPosition(1);
+                            ArmMotor.setPower(-1);
+                            sleep(1000);
+                            ArmMotor.setPower(0);
+                            encoderDrive(DRIVE_SPEED, 8 * .75, 8 * .75, 5.0);
+                            driveTurn(90, false, 1.0, 5.0);
+                            encoderDrive(DRIVE_SPEED, 17 * .75, 17 * .75, 5.0);
+                            driveTurn(94, true, 1.0, 5.0);
+                            encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                            ArmMotor.setPower(1);
+                            sleep(500);
+                            ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
 
+                            ArmServo.setPosition(.6);
+                            sleep(2000);
+                            ClawServoL.setPosition(.5);
+                            sleep(500);
+                            ArmServo.setPosition(1);
+                            ArmMotor.setPower(-1);
+                            sleep(1000);
+                            ArmMotor.setPower(0);
+                            encoderDrive(DRIVE_SPEED, 3.5 * .75, 3.5 * .75, 5.0);
+                            Moved = true;
+                            break;
                         }
-                        if (detection.id == 119) {//BlueBackStage
 
-                        }
-                   // }
+                        AlreadyDetect = true;
+                        Moved = true;
+                        //}
+                    }
+                    if (detection.id == 372) {//RedBackStage
+
+                    }
+                    if (detection.id == 249) {//BlueFrontStage
+
+                    }
+                    if (detection.id == 119) {//BlueBackStage
+
+                    }
+                    // }
                 }
 
                 telemetry.addData("Total Detections", detectionCount);
-            } else {
-                telemetry.addData("No AprilTags Detected", " ");
             }
 
+
             telemetry.update();  // Update telemetry
+
         }
-
-
-
 
 
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
-        //encoderDrive(DRIVE_SPEED,  move,  move, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-       // driveTurn(90,false,1.0,5.0);
+        // encoderDrive(DRIVE_SPEED,  47*.75,  47*.75, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+        // driveTurn(90,false,1.0,5.0);
         //encoderDrive(TURN_SPEED,   turn, -turn, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
         // encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
 
 
-
-        telemetry.addData("Path", "Complete");
-        telemetry.update();
-        sleep(1000);  // pause to display final telemetry message.
+//
+//        telemetry.addData("Path", "Complete");
+//        telemetry.update();
+//        sleep(1000);  // pause to display final telemetry message.
 
     }
 
@@ -301,8 +455,8 @@ public class TestingEncoder extends LinearOpMode {
 
 
             // Determine new target position, and pass to motor controller
-            newLeftTarget = FrontLeft.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = FrontRight.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            newLeftTarget = FrontLeft.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+            newRightTarget = FrontRight.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
 
             FrontLeft.setTargetPosition(newLeftTarget);
             FrontRight.setTargetPosition(newRightTarget);
@@ -331,9 +485,9 @@ public class TestingEncoder extends LinearOpMode {
                     (FrontLeft.isBusy() && FrontRight.isBusy())) {
                 telemetryAprilTag();
                 // Display it for the driver.
-                telemetry.addData("Running to",  " %7d :%7d", newLeftTarget,  newRightTarget);
-                telemetry.addData("Currently at",  " at %7d :%7d",
-                        FrontLeft.getCurrentPosition(), FrontRight.getCurrentPosition(),BackLeft.getCurrentPosition(), BackRight.getCurrentPosition());
+                telemetry.addData("Running to", " %7d :%7d", newLeftTarget, newRightTarget);
+                telemetry.addData("Currently at", " at %7d :%7d",
+                        FrontLeft.getCurrentPosition(), FrontRight.getCurrentPosition(), BackLeft.getCurrentPosition(), BackRight.getCurrentPosition());
 
                 telemetry.update();
             }
@@ -353,9 +507,10 @@ public class TestingEncoder extends LinearOpMode {
         }
         visionPortal.close();
     }
+
     public void ArmDrive(double speed,
-                             double wormRotate, double extend,
-                             double timeoutS) {
+                         double wormRotate, double extend,
+                         double timeoutS) {
         int newWormTarget;
         int newExtendTarget;
 
@@ -364,8 +519,8 @@ public class TestingEncoder extends LinearOpMode {
 
 
             // Determine new target position, and pass to motor controller
-            newWormTarget = Worm.getCurrentPosition() + (int)(wormRotate/2.25 * COUNTS_PER_INCH);
-            newExtendTarget = ArmMotor.getCurrentPosition() + (int)(extend * COUNTS_PER_INCH);
+            newWormTarget = Worm.getCurrentPosition() + (int) (wormRotate / 2.25 * COUNTS_PER_INCH);
+            newExtendTarget = ArmMotor.getCurrentPosition() + (int) (extend * COUNTS_PER_INCH);
 
             Worm.setTargetPosition(newWormTarget);
             ArmMotor.setTargetPosition(newExtendTarget);
@@ -375,7 +530,7 @@ public class TestingEncoder extends LinearOpMode {
             ArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // reset the timeout time and start motion.
-           // runtime.reset();
+            // runtime.reset();
             Worm.setPower(Math.abs(speed));
             ArmMotor.setPower(Math.abs(speed));
 
@@ -393,7 +548,7 @@ public class TestingEncoder extends LinearOpMode {
             ArmMotor.setPower(0);
 
             // Turn off RUN_TO_POSITION
-           Worm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            Worm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
@@ -401,15 +556,17 @@ public class TestingEncoder extends LinearOpMode {
         }
         visionPortal.close();
     }
-    public void driveTurn(double turnDegrees, boolean Left,double speed, double maxTime){
-        int LoR=1 ;
-        if (Left){
-            LoR=-1;
+
+    public void driveTurn(double turnDegrees, boolean Left, double speed, double maxTime) {
+        int LoR = 1;
+        if (Left) {
+            LoR = -1;
         }
         double turnDegConv = .19444444;
-        double turn = turnDegrees*turnDegConv*LoR;
+        double turn = turnDegrees * turnDegConv * LoR;
         encoderDrive(speed, turn, -turn, maxTime);
     }
+
     private void initAprilTag() {
 
         // Create the AprilTag processor.
@@ -444,7 +601,7 @@ public class TestingEncoder extends LinearOpMode {
                 .setDrawTagOutline(true)
                 .setDrawTagID(true)
                 .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setOutputUnits(DistanceUnit.INCH,AngleUnit.DEGREES)
+                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
                 .build();
 
         // Adjust Image Decimation to trade-off detection-range for detection-rate.
@@ -468,17 +625,17 @@ public class TestingEncoder extends LinearOpMode {
         //Size sz = new Size(640,480);
         // Choose a camera resolution. Not all cameras support all resolutions.
         //builder.setCameraResolution(sz);
-        builder.setCameraResolution(new Size(640,480));
+        builder.setCameraResolution(new Size(640, 480));
         // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
         //builder.enableLiveView(true);
 
         // Set the stream format; MJPEG uses less bandwidth than default YUY2.
-       // builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+        // builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
 
         // Choose whether or not LiveView stops if no processors are enabled.
         // If set "true", monitor shows solid orange screen if no processors enabled.
         // If set "false", monitor shows camera view without annotations.
-       // builder.setAutoStopLiveView(false);
+        // builder.setAutoStopLiveView(false);
 
         // Set and enable the processor.
         builder.addProcessor(aprilTag);
@@ -490,6 +647,7 @@ public class TestingEncoder extends LinearOpMode {
         visionPortal.setProcessorEnabled(aprilTag, true);
 
     }   // end method initAprilTag()
+
     private void telemetryAprilTag() {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();

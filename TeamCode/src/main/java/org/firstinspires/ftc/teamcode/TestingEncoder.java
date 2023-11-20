@@ -405,10 +405,10 @@ public class TestingEncoder extends LinearOpMode {
                     double move1 = distance1 * adjust;
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
                     driveTurn(85, true, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -10 * .75, -10 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, -11 * .75, -10 * .75, 5.0);
 
                     ArmMotor.setPower(1);
-                    sleep(2000);
+                    sleep(2300);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
 
                     ArmServo.setPosition(.6);
@@ -429,7 +429,7 @@ public class TestingEncoder extends LinearOpMode {
                     double move3 = distance3 * adjust;
                     encoderDrive(DRIVE_SPEED, move3, move3, 5.0);
                     driveTurn(90, true, 1.0, 5.0);
-                    double distance4 = 7;
+                    double distance4 = 6;
                     double move4 = distance4 * adjust;
                     encoderDrive(DRIVE_SPEED, move4, move4, 5.0);
                     ArmMotor.setPower(1);
@@ -451,14 +451,14 @@ public class TestingEncoder extends LinearOpMode {
                 if (XPos < 2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
                     driveTurn(15, false, 1.0, 5.0);
                     ArmMotor.setPower(1);
                     sleep(2000);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
 
                     ArmServo.setPosition(.6);
-                    sleep(2000);
+                    sleep(2300);
                     ClawServoR.setPosition(.5);
                     sleep(500);
                     ArmServo.setPosition(1);
@@ -466,9 +466,9 @@ public class TestingEncoder extends LinearOpMode {
                     sleep(1000);
                     ArmMotor.setPower(0);
                     driveTurn(15, true, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -15 * .75, -15 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, -13 * .75, -13 * .75, 5.0);
                     driveTurn(87, false, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, 36 * .75, 36 * .75, 5.0);
                     ArmMotor.setPower(1);
                     sleep(500);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
@@ -491,9 +491,9 @@ public class TestingEncoder extends LinearOpMode {
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
                     driveTurn(87.5, false, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -10.5 * .75, -10.5 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, -11 * .75, -11 * .75, 5.0);
                     ArmMotor.setPower(1);
-                    sleep(2000);
+                    sleep(2300);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
                     ArmServo.setPosition(.6);
                     sleep(2000);
@@ -545,10 +545,10 @@ public class TestingEncoder extends LinearOpMode {
                     double move1 = distance1 * adjust;
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
                     driveTurn(85, true, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -10 * .75, -10 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, -11 * .75, -10 * .75, 5.0);
 
                     ArmMotor.setPower(1);
-                    sleep(2000);
+                    sleep(2300);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
 
                     ArmServo.setPosition(.6);
@@ -591,10 +591,10 @@ public class TestingEncoder extends LinearOpMode {
                 if (XPos < 2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
                     driveTurn(15, false, 1.0, 5.0);
                     ArmMotor.setPower(1);
-                    sleep(2000);
+                    sleep(2300);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
 
                     ArmServo.setPosition(.6);
@@ -606,7 +606,7 @@ public class TestingEncoder extends LinearOpMode {
                     sleep(1000);
                     ArmMotor.setPower(0);
                     driveTurn(15, true, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -15 * .75, -15 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, -14 * .75, -14 * .75, 5.0);
                     driveTurn(87, true, 1.0, 5.0);
                     encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
                     ArmMotor.setPower(1);
@@ -631,9 +631,9 @@ public class TestingEncoder extends LinearOpMode {
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
                     driveTurn(87.5, false, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -10.5 * .75, -10.5 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, -11 * .75, -11 * .75, 5.0);
                     ArmMotor.setPower(1);
-                    sleep(2000);
+                    sleep(2300);
                     ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
                     ArmServo.setPosition(.6);
                     sleep(2000);

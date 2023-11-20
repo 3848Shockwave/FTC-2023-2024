@@ -106,28 +106,28 @@ public class MainDrive extends LinearOpMode {
                     sleep(50);
                     Worm.setPower(0);
                 }
-                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()+.2<1){
+                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()+.02<1){
                     ArmServo.setPosition(ArmServo.getPosition()+.02);
 
                     sleep(50);
                 }
-                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()-.2>0){
+                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()-.02>0){
                     ArmServo.setPosition(ArmServo.getPosition()-.02);
                     sleep(50);
                 }
                 if (gamepad1.dpad_up){
                     checkOne=true;
                 }
-                if((gamepad2.b || gamepad1.b)&& !clawR) {
+                if(gamepad2.b&& !clawR) {
                     if(ClawServoR.getPosition() == .5) ClawServoR.setPosition(1);
                     else ClawServoR.setPosition(.5);
                     clawR = true;
-                } else if(!gamepad2.b||!gamepad1.b) clawR = false;
-                if((gamepad2.y ||gamepad1.y)&& !clawL) {
+                } else if(!gamepad2.b) clawR = false;
+                if((gamepad2.y )&& !clawL) {
                     if(ClawServoL.getPosition() == .4) ClawServoL.setPosition(-1);
                     else ClawServoL.setPosition(.4);
                     clawL = true;
-                } else if(!gamepad2.y||gamepad1.y) clawL = false;
+                } else if(!gamepad2.y) clawL = false;
 
                 if (gamepad1.b){
                     checkThree=true;

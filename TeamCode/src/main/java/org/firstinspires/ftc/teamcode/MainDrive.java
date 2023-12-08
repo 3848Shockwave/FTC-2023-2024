@@ -6,11 +6,11 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="Basic: Omni Linear OpMode", group="Linear OpMode")
+@TeleOp(name="Main Drive", group="Linear OpMode")
 public class MainDrive extends LinearOpMode {
 
         // Declare OpMode members for each of the 4 motors.
-        private ElapsedTime runtime = new ElapsedTime();
+        private final ElapsedTime runtime = new ElapsedTime();
         private DcMotor BackRight = null;
         private DcMotor BackLeft = null;
         private DcMotor FrontRight = null;
@@ -18,9 +18,13 @@ public class MainDrive extends LinearOpMode {
         private DcMotor ArmMotor = null;
         private DcMotor Worm = null;
         Servo ArmServo;
+        Servo ClawServoR;
+        Servo ClawServoL;
         Servo LaunchServo;
     boolean checkOne = false;
     boolean checkTwo = false;
+    boolean clawR = false;
+    boolean clawL = false;
     boolean checkThree = false;
     boolean Reload = false;
 
@@ -35,6 +39,9 @@ public class MainDrive extends LinearOpMode {
             ArmMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
             Worm = hardwareMap.get(DcMotor.class, "Worm");
             ArmServo = hardwareMap.get(Servo.class, "ArmServo");
+            ClawServoR = hardwareMap.get(Servo.class, "ClawServoR");
+            ClawServoL = hardwareMap.get(Servo.class, "ClawServoL");
+            Worm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             //LaunchServo = hardwareMap.get(Servo.class, "LaunchServo");
             FrontLeft.setDirection(DcMotor.Direction.REVERSE);
             BackLeft.setDirection(DcMotor.Direction.REVERSE);
@@ -53,16 +60,19 @@ public class MainDrive extends LinearOpMode {
                 double max;
 
                 // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-                double axial   = gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-                double lateral =  -gamepad1.left_stick_x;
+                double axial   = gamepad1.right_stick_y;
+                double axial2   = gamepad1.left_stick_y;// Note: pushing stick forward gives negative value
+                double lateral =  gamepad1.right_trigger;
+                double lateral1 =  gamepad1.left_trigger;
+                double lateral2 =  -gamepad1.left_stick_x;
                 double yaw     =  -gamepad1.right_stick_x;
 
                 // Combine the joystick requests for each axis-motion to determine each wheel's power.
                 // Set up a variable for each drive wheel to save the power level for telemetry.
-                double leftFrontPower  = (axial + lateral + yaw);
-                double rightFrontPower = (axial - lateral - yaw);
-                double leftBackPower   = (axial - lateral + yaw);
-                double rightBackPower  = (axial + lateral - yaw);
+                double leftFrontPower  =.75* ((axial2+axial) + ((-1*lateral)+lateral1+lateral2) + yaw);
+                double rightFrontPower =.75* ((axial2+axial) - ((-1*lateral)+lateral1+lateral2) - yaw);
+                double leftBackPower   =.75* ((axial2+axial) - ((-1*lateral)+lateral1+lateral2) + yaw);
+                double rightBackPower  =.75*((axial2+axial) + ((-1*lateral)+lateral1+lateral2) - yaw);
 
                 // Normalize the values so no wheel power exceeds 100%
                 // This ensures that the robot maintains the desired motion.
@@ -77,39 +87,49 @@ public class MainDrive extends LinearOpMode {
                     rightBackPower  /= max;
                 }
 
-                if (gamepad2.right_trigger>0){
+                if (gamepad2.left_trigger>0){
                     ArmMotor.setPower(1);
                     sleep(50);
                     ArmMotor.setPower(0);
                 }
-                if (gamepad2.left_trigger>0){
+                if (gamepad2.right_trigger>0){
                     ArmMotor.setPower(-1);
                     sleep(50);
                     ArmMotor.setPower(0);
                 }
-                if (gamepad2.right_stick_y>0){
-                    Worm.setPower(1);
-                    sleep(50);
-                    Worm.setPower(0);
-                }
-                if (gamepad2.right_stick_y<0){
+                if (gamepad2.left_stick_y<0){
                     Worm.setPower(-1);
                     sleep(50);
                     Worm.setPower(0);
                 }
                 if (gamepad2.left_stick_y>0){
-                    ArmServo.setPosition(ArmServo.getPosition()+.1);
-
-                    sleep(10);
+                    Worm.setPower(1);
+                    sleep(50);
+                    Worm.setPower(0);
                 }
-                if (gamepad2.left_stick_y<0){
-                    ArmServo.setPosition(ArmServo.getPosition()-.1);
+                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()+.02<1){
+                    ArmServo.setPosition(ArmServo.getPosition()+.02);
 
-                    sleep(10);
+                    sleep(50);
+                }
+                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()-.02>0){
+                    ArmServo.setPosition(ArmServo.getPosition()-.02);
+                    sleep(50);
                 }
                 if (gamepad1.dpad_up){
                     checkOne=true;
                 }
+                if(gamepad2.b&& !clawR) {
+                    if(ClawServoR.getPosition() == .5) ClawServoR.setPosition(1);
+                    else ClawServoR.setPosition(.5);
+                    clawR = true;
+                } else if(!gamepad2.b) clawR = false;
+                if((gamepad2.y )&& !clawL) {
+                    if(ClawServoL.getPosition() == .4) ClawServoL.setPosition(-1);
+                    else ClawServoL.setPosition(.4);
+                    clawL = true;
+                } else if(!gamepad2.y) clawL = false;
+
                 if (gamepad1.b){
                     checkThree=true;
                 }
@@ -127,10 +147,10 @@ public class MainDrive extends LinearOpMode {
                 }
 
                 // Send calculated power to wheels
-                FrontLeft.setPower(leftFrontPower);
-                FrontRight.setPower(rightFrontPower);
-                BackLeft.setPower(leftBackPower);
-                BackRight.setPower(rightBackPower);
+                FrontLeft.setPower(.75*leftFrontPower);
+                FrontRight.setPower(.75*rightFrontPower);
+                BackLeft.setPower(.75*leftBackPower);
+                BackRight.setPower(.75*rightBackPower);
 
                 // Show the elapsed game time and wheel power.
                 telemetry.addData("Status", "Run Time: " + runtime.toString());

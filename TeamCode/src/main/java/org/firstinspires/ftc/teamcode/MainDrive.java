@@ -41,6 +41,7 @@ public class MainDrive extends LinearOpMode {
             ArmServo = hardwareMap.get(Servo.class, "ArmServo");
             ClawServoR = hardwareMap.get(Servo.class, "ClawServoR");
             ClawServoL = hardwareMap.get(Servo.class, "ClawServoL");
+            Worm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             //LaunchServo = hardwareMap.get(Servo.class, "LaunchServo");
             FrontLeft.setDirection(DcMotor.Direction.REVERSE);
             BackLeft.setDirection(DcMotor.Direction.REVERSE);

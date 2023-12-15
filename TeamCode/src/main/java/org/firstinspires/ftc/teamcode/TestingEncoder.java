@@ -103,8 +103,7 @@ public class TestingEncoder extends LinearOpMode {
     IMU imu;
     private final ElapsedTime runtime = new ElapsedTime();
     private final ElapsedTime timeFrom = new ElapsedTime();
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
+
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
@@ -122,66 +121,6 @@ public class TestingEncoder extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
-
-//
-//        // Check if currentDetections is not null and not empty
-//        if (currentDetections != null && !currentDetections.isEmpty()) {
-//            int detectionCount = 0;
-//            for (AprilTagDetection detection : currentDetections) {
-//                detectionCount++;
-//
-//                // Display x, y, z values for each detection
-//                telemetry.addData("Detection " + detectionCount, "X: %.2f, Y: %.2f, Z: %.2f inches",
-//                        detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
-//
-//                // ... additional processing for each detection if needed
-//            }
-//
-//            telemetry.addData("Total Detections", detectionCount);
-//
-//        } else {
-//            telemetry.addData("No AprilTags Detected", " ");
-//        }
-
-        initAprilTag();
-        imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
-
-        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
-
-        // Now initialize the IMU with this mounting orientation
-        // Note: if you choose two conflicting directions, this initialization will cause a code exception.
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
-
-        // Loop and update the dashboard
-
-
-        telemetry.addData("Hub orientation", "Logo=%s   USB=%s\n ", logoDirection, usbDirection);
-
-        // Check to see if heading reset is requested
-        if (gamepad1.y) {
-            telemetry.addData("Yaw", "Resetting\n");
-            imu.resetYaw();
-        } else {
-            telemetry.addData("Yaw", "Press Y (triangle) on Gamepad to reset\n");
-        }
-
-        // Retrieve Rotational Angles and Velocities
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
-
-        telemetryAprilTag();
-        telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-        telemetry.addData("Pitch (X)", "%.2f Deg.", orientation.getPitch(AngleUnit.DEGREES));
-        telemetry.addData("Roll (Y)", "%.2f Deg.\n", orientation.getRoll(AngleUnit.DEGREES));
-        telemetry.addData("Yaw (Z) velocity", "%.2f Deg/Sec", angularVelocity.zRotationRate);
-        telemetry.addData("Pitch (X) velocity", "%.2f Deg/Sec", angularVelocity.xRotationRate);
-        telemetry.addData("Roll (Y) velocity", "%.2f Deg/Sec", angularVelocity.yRotationRate);
-        telemetry.update();
-
-
         // Initialize the drive system variables.
         FrontLeft = hardwareMap.get(DcMotor.class, "FrontLeft");
         BackLeft = hardwareMap.get(DcMotor.class, "BackLeft");
@@ -210,89 +149,16 @@ public class TestingEncoder extends LinearOpMode {
         BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // Send telemetry message to indicate successful Encoder reset
-//        telemetry.addData("Starting at",  "%7d :%7d",
-//                FrontLeft.getCurrentPosition(),
-//                FrontRight.getCurrentPosition(), BackLeft.getCurrentPosition(),
-//                BackRight.getCurrentPosition());
-//        //telemetry.addData("inches per",  "%7d :%7d",COUNTS_PER_INCH);
-//        telemetry.update();
 
-        // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
 
         while (opModeIsActive() && !Moved && !AlreadyDetect) {
             timeFrom.startTime();
-            List<AprilTagDetection> currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
-//            driveTurn(45, false, 1.0, 5.0);
-//            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
-//            sleep(2000);
-//            driveTurn(90, true, 1.0, 5.0);
-//            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
-//            sleep(2000);
-            //  Check if currentDetections is not null and not empty
+
             sleep(5000);
 
-            driveTurn(45, true, 1.0, 5.0);
-            sleep(5000);
-            currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
-            if (currentDetections != null && !currentDetections.isEmpty()) {
-                for (AprilTagDetection detection : currentDetections) {
-                    if (detection.id == 477) {
-                        DetectID = 477;
 
-                    }
-                }
-                driveTurn(45, false, 1.0, 5.0);
-            }
-
-
-            if (currentDetections != null && !currentDetections.isEmpty()) {
-                int detectionCount = 0;  // Counter for the number of detections
-                //if (Moved==0) {
-                for (AprilTagDetection detection : currentDetections) {
-                    sleep(1000);
-                    // Process each detection
-                    detectionCount++;
-
-                    // Display x, y, z values for each detection
-                    telemetry.addData("Detection " + detectionCount + " (ID " + detection.id + ")",
-                            "X: %.2f, Y: %.2f, Z: %.2f inches",
-                            detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
-
-                    // ... additional processing for each detection if needed
-
-
-                    AlreadyDetect = true;
-                    Moved = true;
-                    //}
-                    if (detection.id == 477) {//RedBackStage
-                        AutoMove(477, (int) detection.ftcPose.x, false);
-                    }
-
-                    if (detection.id == 372) {//BlueBackStage
-                        AutoMove(372, (int) detection.ftcPose.x, false);
-                    }
-                    if (detection.id == 249) {//BlueFrontStage
-
-                    }
-                    if (detection.id == 119) {//RedBackStage
-
-                    }
-                    // }
-                }
-
-
-                telemetry.addData("Total Detections", detectionCount);
-            } else {
-                assert currentDetections != null;
-                timeFrom.seconds();
-                driveTurn(45, true, 1.0, 5.0);
-                currentDetections = aprilTag != null ? aprilTag.getDetections() : null;
-                AutoMove(currentDetections.get(1).id, (int) currentDetections.get(1).ftcPose.x, true);
-
-            }
 
 
             telemetry.update();  // Update telemetry
@@ -362,7 +228,6 @@ public class TestingEncoder extends LinearOpMode {
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
                     (FrontLeft.isBusy() && FrontRight.isBusy())) {
-                telemetryAprilTag();
                 // Display it for the driver.
                 telemetry.addData("Running to", " %7d :%7d", newLeftTarget, newRightTarget);
                 telemetry.addData("Currently at", " at %7d :%7d",
@@ -384,7 +249,6 @@ public class TestingEncoder extends LinearOpMode {
 
             sleep(250);   // optional pause after each move.
         }
-        visionPortal.close();
     }
 
     public void AutoMove(int ID, int XPos, boolean HasRot) {
@@ -718,7 +582,7 @@ public class TestingEncoder extends LinearOpMode {
 
             //sleep(250);   // optional pause after each move.
         }
-        visionPortal.close();
+
     }
 
     public void driveTurn(double turnDegrees, boolean Left, double speed, double maxTime) {
@@ -731,110 +595,6 @@ public class TestingEncoder extends LinearOpMode {
         encoderDrive(speed, turn, -turn, maxTime);
     }
 
-    private void initAprilTag() {
 
-        // Create the AprilTag processor.
-        AprilTagMetadata RedBack;
-        AprilTagMetadata RedFront;
-        AprilTagMetadata LeftBack;
-        AprilTagMetadata LeftFront;
-
-
-        AprilTagLibrary.Builder myAprilTagLibraryBuilder;
-        AprilTagProcessor.Builder myAprilTagProcessorBuilder;
-        AprilTagLibrary myAprilTagLibrary;
-
-        myAprilTagLibraryBuilder = new AprilTagLibrary.Builder();
-        myAprilTagLibraryBuilder.addTags(AprilTagGameDatabase.getCurrentGameTagLibrary());
-        RedBack = new AprilTagMetadata(372, "RB", 3.5, DistanceUnit.INCH);
-        RedFront = new AprilTagMetadata(477, "RF", 3.5, DistanceUnit.INCH);
-        LeftBack = new AprilTagMetadata(119, "LB", 3.5, DistanceUnit.INCH);
-        LeftFront = new AprilTagMetadata(249, "LF", 3.5, DistanceUnit.INCH);
-
-        myAprilTagLibraryBuilder.addTag(RedBack);
-        myAprilTagLibraryBuilder.addTag(RedFront);
-        myAprilTagLibraryBuilder.addTag(LeftBack);
-        myAprilTagLibraryBuilder.addTag(LeftFront);
-
-
-        myAprilTagLibrary = myAprilTagLibraryBuilder.build();
-        myAprilTagProcessorBuilder = new AprilTagProcessor.Builder();
-        myAprilTagProcessorBuilder.setTagLibrary(myAprilTagLibrary);
-        aprilTag = myAprilTagProcessorBuilder
-                .setDrawAxes(true)
-                .setDrawTagOutline(true)
-                .setDrawTagID(true)
-                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
-                .build();
-
-        // Adjust Image Decimation to trade-off detection-range for detection-rate.
-        // eg: Some typical detection data using a Logitech C920 WebCam
-        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
-        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
-        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
-        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
-        // Note: Decimation can be changed on-the-fly to adapt during a match.
-        //aprilTag.setDecimation(3);
-
-        // Create the vision portal by using a builder.
-        VisionPortal.Builder builder = new VisionPortal.Builder();
-
-        // Set the camera (webcam vs. built-in RC phone camera).
-        if (USE_WEBCAM) {
-            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
-        } else {
-            builder.setCamera(BuiltinCameraDirection.BACK);
-        }
-        //Size sz = new Size(640,480);
-        // Choose a camera resolution. Not all cameras support all resolutions.
-        //builder.setCameraResolution(sz);
-        builder.setCameraResolution(new Size(640, 480));
-        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
-        //builder.enableLiveView(true);
-
-        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
-        // builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
-
-        // Choose whether or not LiveView stops if no processors are enabled.
-        // If set "true", monitor shows solid orange screen if no processors enabled.
-        // If set "false", monitor shows camera view without annotations.
-        // builder.setAutoStopLiveView(false);
-
-        // Set and enable the processor.
-        builder.addProcessor(aprilTag);
-
-        // Build the Vision Portal, using the above settings.
-        visionPortal = builder.build();
-
-        // Disable or re-enable the aprilTag processor at any time.
-        visionPortal.setProcessorEnabled(aprilTag, true);
-
-    }   // end method initAprilTag()
-
-    private void telemetryAprilTag() {
-
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        telemetry.addData("# AprilTags Detected", currentDetections.size());
-
-        // Step through the list of detections and display info for each one.
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
-            }
-        }   // end for() loop
-
-        // Add "key" information to telemetry
-        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-        telemetry.addLine("RBE = Range, Bearing & Elevation");
-
-    }   // end method telemetryAprilTag()
 }
 

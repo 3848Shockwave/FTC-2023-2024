@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -21,13 +22,15 @@ public class MainDrive extends LinearOpMode {
         Servo ClawServoR;
         Servo ClawServoL;
         Servo LaunchServo;
+        double increment = .2;
     boolean checkOne = false;
     boolean checkTwo = false;
     boolean clawR = false;
     boolean clawL = false;
     boolean checkThree = false;
     boolean Reload = false;
-
+    long sleepTime = 50;
+    double speedLimit = .75;
         @Override
         public void runOpMode() {
 
@@ -43,6 +46,7 @@ public class MainDrive extends LinearOpMode {
             ClawServoL = hardwareMap.get(Servo.class, "ClawServoL");
             Worm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             //LaunchServo = hardwareMap.get(Servo.class, "LaunchServo");
+            Worm.setDirection(DcMotorSimple.Direction.REVERSE);
             FrontLeft.setDirection(DcMotor.Direction.REVERSE);
             BackLeft.setDirection(DcMotor.Direction.REVERSE);
             FrontRight.setDirection(DcMotor.Direction.FORWARD);
@@ -58,6 +62,7 @@ public class MainDrive extends LinearOpMode {
             // run until the end of the match (driver presses STOP)
             while (opModeIsActive()) {
                 double max;
+                double max1;
 
                 // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
                 double axial   = gamepad1.right_stick_y;
@@ -66,59 +71,61 @@ public class MainDrive extends LinearOpMode {
                 double lateral1 =  gamepad1.left_trigger;
                 double lateral2 =  -gamepad1.left_stick_x;
                 double yaw     =  -gamepad1.right_stick_x;
-
+                double worm =   gamepad2.left_stick_y;
                 // Combine the joystick requests for each axis-motion to determine each wheel's power.
                 // Set up a variable for each drive wheel to save the power level for telemetry.
-                double leftFrontPower  =.75* ((axial2+axial) + ((-1*lateral)+lateral1+lateral2) + yaw);
-                double rightFrontPower =.75* ((axial2+axial) - ((-1*lateral)+lateral1+lateral2) - yaw);
-                double leftBackPower   =.75* ((axial2+axial) - ((-1*lateral)+lateral1+lateral2) + yaw);
-                double rightBackPower  =.75*((axial2+axial) + ((-1*lateral)+lateral1+lateral2) - yaw);
-
+                double leftFrontPower  = ((axial2+axial) + ((-1*lateral)+lateral1+lateral2) + yaw);
+                double rightFrontPower = ((axial2+axial) - ((-1*lateral)+lateral1+lateral2) - yaw);
+                double leftBackPower   = ((axial2+axial) - ((-1*lateral)+lateral1+lateral2) + yaw);
+                double rightBackPower  =((axial2+axial) + ((-1*lateral)+lateral1+lateral2) - yaw);
+                double wormPower  = worm;
                 // Normalize the values so no wheel power exceeds 100%
                 // This ensures that the robot maintains the desired motion.
                 max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
                 max = Math.max(max, Math.abs(leftBackPower));
                 max = Math.max(max, Math.abs(rightBackPower));
-
+                max1 = Math.max(Math.abs(worm), Math.abs(rightFrontPower));
                 if (max > 1.0) {
                     leftFrontPower  /= max;
                     rightFrontPower /= max;
                     leftBackPower   /= max;
                     rightBackPower  /= max;
+
+                }
+                if (max1>1.0){
+                    worm/=max1;
                 }
 
                 if (gamepad2.left_trigger>0){
                     ArmMotor.setPower(1);
-                    sleep(50);
+                    sleep(sleepTime);
                     ArmMotor.setPower(0);
                 }
                 if (gamepad2.right_trigger>0){
                     ArmMotor.setPower(-1);
-                    sleep(50);
+                    sleep(sleepTime);
                     ArmMotor.setPower(0);
                 }
-                if (gamepad2.left_stick_y<0){
-                    Worm.setPower(-1);
-                    sleep(50);
-                    Worm.setPower(0);
-                }
-                if (gamepad2.left_stick_y>0){
-                    Worm.setPower(1);
-                    sleep(50);
-                    Worm.setPower(0);
-                }
-                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()+.02<1){
-                    ArmServo.setPosition(ArmServo.getPosition()+.02);
+//            og worm code but milan no like    if (gamepad2.left_stick_y<0){
+//                    Worm.setPower(-1);
+//                    sleep(50);
+//                    Worm.setPower(0);
+//                }
+//                if (gamepad2.left_stick_y>0){
+//                    Worm.setPower(1);
+//                    sleep(50);
+//                    Worm.setPower(0);
+//                }
+                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()+increment<1){
+                    ArmServo.setPosition(ArmServo.getPosition()+increment);
 
-                    sleep(50);
+                    sleep(sleepTime);
                 }
-                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()-.02>0){
-                    ArmServo.setPosition(ArmServo.getPosition()-.02);
-                    sleep(50);
+                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()-increment>0){
+                    ArmServo.setPosition(ArmServo.getPosition()-increment);
+                    sleep(sleepTime);
                 }
-                if (gamepad1.dpad_up){
-                    checkOne=true;
-                }
+
                 if(gamepad2.b&& !clawR) {
                     if(ClawServoR.getPosition() == .5) ClawServoR.setPosition(1);
                     else ClawServoR.setPosition(.5);
@@ -129,16 +136,19 @@ public class MainDrive extends LinearOpMode {
                     else ClawServoL.setPosition(.4);
                     clawL = true;
                 } else if(!gamepad2.y) clawL = false;
-
+                if (gamepad1.dpad_up){
+                    checkOne=true;
+                }
+                if (gamepad1.left_bumper){
+                    checkTwo=true;
+                }
                 if (gamepad1.b){
                     checkThree=true;
                 }
                 if (gamepad1.x){
                     Reload=true;
                 }
-                if (gamepad1.left_bumper){
-                    checkTwo=true;
-                }
+
                 if(checkOne&&checkTwo&&checkThree){
                     LaunchServo.setPosition(0);
                 }
@@ -147,11 +157,11 @@ public class MainDrive extends LinearOpMode {
                 }
 
                 // Send calculated power to wheels
-                FrontLeft.setPower(.75*leftFrontPower);
-                FrontRight.setPower(.75*rightFrontPower);
-                BackLeft.setPower(.75*leftBackPower);
-                BackRight.setPower(.75*rightBackPower);
-
+                FrontLeft.setPower(speedLimit*leftFrontPower);
+                FrontRight.setPower(speedLimit*rightFrontPower);
+                BackLeft.setPower(speedLimit*leftBackPower);
+                BackRight.setPower(speedLimit*rightBackPower);
+                Worm.setPower(wormPower);
                 // Show the elapsed game time and wheel power.
                 telemetry.addData("Status", "Run Time: " + runtime.toString());
 

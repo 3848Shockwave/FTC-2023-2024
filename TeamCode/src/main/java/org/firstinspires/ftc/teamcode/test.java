@@ -30,7 +30,7 @@ OpenCvCamera cam = null ;
        WebcamName camN = hardwareMap.get(WebcamName.class,"Webcam 1");
        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
        cam = OpenCvCameraFactory.getInstance().createWebcam(camN, cameraMonitorViewId);
-       cam.setPipeline(new Pipeline(telemetry));
+       cam.setPipeline(new Pipelines(telemetry));
        cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             public void onOpened() {
                cam.startStreaming(640,480, OpenCvCameraRotation.UPRIGHT);
@@ -52,10 +52,10 @@ OpenCvCamera cam = null ;
     }
 }
 
-class Pipeline extends OpenCvPipeline {
+class Pipelines extends OpenCvPipeline {
     private final Telemetry telemetry;
 
-    public Pipeline(Telemetry telemetry) {
+    public Pipelines(Telemetry telemetry) {
         // Use the telemetry object passed in to the constructor
         this.telemetry = telemetry;
     }
@@ -84,8 +84,8 @@ class Pipeline extends OpenCvPipeline {
         leftCrop = YCbCr.submat(leftR);
         Core.extractChannel(YCbCr, cr, 1);
         // Threshold values for detecting red pixels (adjust these based on your environment)
-        Scalar lowerRed = new Scalar(86, 112, 173);  // Lower bound for red in YCrCb
-        Scalar upperRed = new Scalar(110, 110, 178);  // Upper bound for red in YCrCb
+        Scalar lowerRed = new Scalar(60, 112, 173);  // Lower bound for red in YCrCb
+        Scalar upperRed = new Scalar(150, 110, 178);  // Upper bound for red in YCrCb
 
         // Create a binary mask based on the red threshold values
 
@@ -102,20 +102,7 @@ class Pipeline extends OpenCvPipeline {
         Scalar rightAvg = Core.mean(rightCrop);
         leftAvgFin = leftAvg.val[0];
         rightAvgFin = rightAvg.val[0];
-        if (avgMask.val[0] > redThreshold) {
-            telemetry.addData("OpenCV", "Object Detected");
 
-
-            if (leftAvgFin > rightAvgFin) {
-                telemetry.addData("OpenCV", "Right");
-            } else if (rightAvgFin > leftAvgFin) {
-                telemetry.addData("OpenCV", "Left");
-            } else {
-                telemetry.addData("OpenCV", "None");
-            }
-        } else {
-            telemetry.addData("OpenCV", "No Red Object");
-        }
         Scalar lowerBlue = new Scalar(100, 0, 0);  // Lower bound for blue in YCrCb
         Scalar upperBlue = new Scalar(200, 255, 255);  // Upper bound for blue in YCrCb
 
@@ -130,7 +117,7 @@ class Pipeline extends OpenCvPipeline {
         double blueThreshold = 150;
 
         // Check if the average blue mask value is above the threshold
-        if (avgBlueMask.val[0] > blueThreshold) {
+        if (avgBlueMask.val[0] > blueThreshold||avgMask.val[0] > redThreshold) {
             telemetry.addData("OpenCV", " Object Detected");
 
             // Your existing code for figuring out which side it is on
@@ -142,7 +129,7 @@ class Pipeline extends OpenCvPipeline {
                 telemetry.addData("OpenCV", "None");
             }
         } else {
-            telemetry.addData("OpenCV", "No Blue Object");
+            telemetry.addData("OpenCV", "No  Object");
         }
 
 

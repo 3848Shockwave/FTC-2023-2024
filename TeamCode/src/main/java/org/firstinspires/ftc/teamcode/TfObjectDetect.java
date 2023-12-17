@@ -38,6 +38,9 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.List;
 
@@ -69,7 +72,7 @@ public class TfObjectDetect extends LinearOpMode {
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
     private TfodProcessor tfod;
-
+    OpenCvCamera cam = null ;
     /**
      * The variable to store our instance of the vision portal.
      */
@@ -78,7 +81,9 @@ public class TfObjectDetect extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        initTfod();
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
@@ -197,3 +202,4 @@ public class TfObjectDetect extends LinearOpMode {
     }   // end method telemetryTfod()
 
 }   // end class
+

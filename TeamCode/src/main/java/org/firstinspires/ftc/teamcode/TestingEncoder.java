@@ -43,6 +43,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.sun.tools.javac.comp.Check;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -55,6 +56,15 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
 import org.firstinspires.ftc.vision.apriltag.AprilTagMetadata;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.List;
 /*
@@ -101,6 +111,10 @@ public class TestingEncoder extends LinearOpMode {
     private boolean AlreadyDetect = false;
     private int DetectID = 0;
     IMU imu;
+    boolean redSide =false;
+    boolean blueSide = false;
+    boolean front = false;
+    boolean back = false;
     private final ElapsedTime runtime = new ElapsedTime();
     private final ElapsedTime timeFrom = new ElapsedTime();
 
@@ -118,9 +132,35 @@ public class TestingEncoder extends LinearOpMode {
             (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double DRIVE_SPEED = 0.2;
     static final double TURN_SPEED = 0.5;
-
+    OpenCvCamera cam = null ;
+    int pos = 0;
+    public void setPos(int pos) {
+        this.pos = pos;
+    }
     @Override
     public void runOpMode() {
+
+        telemetry.addData("Status", "Initializing...");
+        telemetry.update();
+        WebcamName camN = hardwareMap.get(WebcamName.class,"Webcam 1");
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        cam = OpenCvCameraFactory.getInstance().createWebcam(camN, cameraMonitorViewId);
+        cam.setPipeline(new PipelineRed(telemetry,pos));
+
+        cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            public void onOpened() {
+                cam.startStreaming(640,480, OpenCvCameraRotation.UPRIGHT);
+            }
+            public void onError(int errorCode) {
+                telemetry.addData("Error in OpenCV", errorCode);
+                telemetry.update();
+            }
+
+
+        });
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+
         // Initialize the drive system variables.
         FrontLeft = hardwareMap.get(DcMotor.class, "FrontLeft");
         BackLeft = hardwareMap.get(DcMotor.class, "BackLeft");
@@ -149,15 +189,37 @@ public class TestingEncoder extends LinearOpMode {
         BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        telemetry.addData("Status", "Input color, X for blue, B for red");
+        telemetry.update();
+        if (gamepad1.b){
+            redSide=true;
+            blueSide=false;
 
+        }
+        if (gamepad1.x){
+            blueSide=true;
+            redSide=false;
+
+        }
+        telemetry.addData("Status", "Input stage position, Y for front stage, A for back stage");
+        telemetry.update();
+        if (gamepad1.y){
+            front=true;
+            back=false;
+        }
+        if (gamepad1.a){
+            front=false;
+            back=true;
+        }
         waitForStart();
 
 
-        while (opModeIsActive() && !Moved && !AlreadyDetect) {
+        while (opModeIsActive() && !Moved ) {
             timeFrom.startTime();
 
-            sleep(5000);
-
+            AutoMove(pos);
+            Moved = true;
+            sleep(10000000);
 
 
 
@@ -251,15 +313,15 @@ public class TestingEncoder extends LinearOpMode {
         }
     }
 
-    public void AutoMove(int ID, int XPos, boolean HasRot) {
+    public void AutoMove(int location) {
         if (!Moved) {
-            if (ID == 477) {//RedFrontStage
+            if (redSide&&back) {//RedFrontStage
 
                 // DetectID = 477;
 
                 telemetry.addData("DETECT", "477");
                 telemetry.update();
-                if (HasRot) {
+                if (location ==1) {
 
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
@@ -312,7 +374,7 @@ public class TestingEncoder extends LinearOpMode {
                     Moved = true;
                     // break;
                 }
-                if (XPos < 2) {
+                if (location ==2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
@@ -350,7 +412,7 @@ public class TestingEncoder extends LinearOpMode {
                     //break;
 
                 }
-                if (XPos > 4.5) {
+                if (location ==3) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
@@ -393,13 +455,13 @@ public class TestingEncoder extends LinearOpMode {
                 Moved = true;
                 //}
             }
-            if (ID == 372) {//RedFrontStage
+            if (blueSide&back) {//RedFrontStage
 
                 // DetectID = 477;
 
                 telemetry.addData("DETECT", "477");
                 telemetry.update();
-                if (HasRot) {
+                if (location ==1) {
 
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
@@ -452,7 +514,7 @@ public class TestingEncoder extends LinearOpMode {
                     Moved = true;
                     // break;
                 }
-                if (XPos < 2) {
+                if (location ==2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
@@ -490,7 +552,7 @@ public class TestingEncoder extends LinearOpMode {
                     //break;
 
                 }
-                if (XPos > 4.5) {
+                if (location ==3) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
@@ -529,7 +591,7 @@ public class TestingEncoder extends LinearOpMode {
                     // break;
                 }
 
-                AlreadyDetect = true;
+
                 Moved = true;
                 //}
             }
@@ -597,4 +659,72 @@ public class TestingEncoder extends LinearOpMode {
 
 
 }
+class PipelineRed extends OpenCvPipeline {
+    private final Telemetry telemetry;
+    private int pos;
+    public PipelineRed(Telemetry telemetry, int pos) {
+        this.telemetry = telemetry;
+        this.pos = pos;
+    }
+
+    Mat YCbCr = new Mat();
+    Mat leftCrop;
+    Mat rightCrop;
+    Mat centerCrop;
+    double leftAvgFin;
+    double centerAvgFin;
+    double rightAvgFin;
+    Mat output = new Mat();
+    Scalar rectColor = new Scalar(255, 0, 0);
+    TestingEncoder test = new TestingEncoder();
+    @Override
+    public Mat processFrame(Mat input) {
+        Imgproc.cvtColor(input, YCbCr, Imgproc.COLOR_RGB2YCrCb);
+
+        Rect leftR = new Rect(1, 1, 212, 479);
+        Rect centerR = new Rect(214,1,212,479); // Center
+        Rect rightR = new Rect(428, 1, 212, 479);
+
+        input.copyTo(output);
+        Imgproc.rectangle(output, leftR, rectColor, 2);
+        Imgproc.rectangle(output, centerR, rectColor, 2);
+        Imgproc.rectangle(output, rightR, rectColor, 2);
+
+        leftCrop = YCbCr.submat(leftR);
+        centerCrop = YCbCr.submat(centerR);
+
+        rightCrop = YCbCr.submat(rightR);
+
+        Scalar leftAvg = Core.mean(leftCrop);
+        Scalar centerAvg = Core.mean(centerCrop);
+        Scalar rightAvg = Core.mean(rightCrop);
+
+        leftAvgFin = leftAvg.val[0];
+        centerAvgFin = centerAvg.val[0];
+        rightAvgFin = rightAvg.val[0];
+
+        if (leftAvgFin > rightAvgFin && leftAvgFin > centerAvgFin) {
+            telemetry.addData("OpenCV", "Right");
+            pos = 3;
+            test.setPos(pos);
+        }
+        if (rightAvgFin > leftAvgFin && rightAvgFin > centerAvgFin) {
+            telemetry.addData("OpenCV", "Left");
+            pos=1;
+            test.setPos(pos);
+        }
+        if (centerAvgFin > leftAvgFin && centerAvgFin > rightAvgFin) {
+            telemetry.addData("OpenCV", "Center");
+            pos=2;
+            test.setPos(pos);
+        }
+        else {
+            telemetry.addData("OpenCV", "None");
+        }
+
+        telemetry.update();
+        return output;
+    }
+}
+
 

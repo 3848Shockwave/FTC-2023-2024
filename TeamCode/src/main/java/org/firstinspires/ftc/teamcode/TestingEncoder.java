@@ -96,6 +96,7 @@ import java.util.List;
 @Autonomous(name = "Robot: Auto", group = "Robot")
 
 public class TestingEncoder extends LinearOpMode {
+
     private static final boolean USE_WEBCAM = true;
     /* Declare OpMode members. */
     private DcMotor BackRight = null;
@@ -110,6 +111,8 @@ public class TestingEncoder extends LinearOpMode {
     private boolean Moved = false;
     private boolean AlreadyDetect = false;
     private int DetectID = 0;
+    boolean colorSelected = false;
+    boolean stageSelected = false;
     IMU imu;
     boolean redSide =false;
     boolean blueSide = false;
@@ -133,24 +136,23 @@ public class TestingEncoder extends LinearOpMode {
     static final double DRIVE_SPEED = 0.2;
     static final double TURN_SPEED = 0.5;
     OpenCvCamera cam = null ;
-    int pos = 0;
-    public void setPos(int pos) {
-        this.pos = pos;
-    }
+    public static Position pos = new Position();
+
     @Override
     public void runOpMode() {
 
         telemetry.addData("Status", "Initializing...");
         telemetry.update();
-        WebcamName camN = hardwareMap.get(WebcamName.class,"Webcam 1");
+        WebcamName camN = hardwareMap.get(WebcamName.class, "Webcam 1");
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         cam = OpenCvCameraFactory.getInstance().createWebcam(camN, cameraMonitorViewId);
-        cam.setPipeline(new PipelineRed(telemetry,pos));
+        cam.setPipeline(new PipelineRed(telemetry));
 
         cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             public void onOpened() {
-                cam.startStreaming(640,480, OpenCvCameraRotation.UPRIGHT);
+                cam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
             }
+
             public void onError(int errorCode) {
                 telemetry.addData("Error in OpenCV", errorCode);
                 telemetry.update();
@@ -189,38 +191,44 @@ public class TestingEncoder extends LinearOpMode {
         BackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        telemetry.addData("Status", "Input color, X for blue, B for red");
-        telemetry.update();
-        if (gamepad1.b){
-            redSide=true;
-            blueSide=false;
 
+        while (!colorSelected) {
+            telemetry.addData("Status", "Input color, X for blue, B for red");
+            telemetry.update();
+            if (gamepad1.b) {
+                redSide = true;
+                blueSide = false;
+                colorSelected = true;
+            }
+            if (gamepad1.x) {
+                blueSide = true;
+                redSide = false;
+                colorSelected = true;
+            }
         }
-        if (gamepad1.x){
-            blueSide=true;
-            redSide=false;
-
-        }
-        telemetry.addData("Status", "Input stage position, Y for front stage, A for back stage");
-        telemetry.update();
-        if (gamepad1.y){
-            front=true;
-            back=false;
-        }
-        if (gamepad1.a){
-            front=false;
-            back=true;
+        while (!stageSelected) {
+            telemetry.addData("Status", "Input stage position, Y for front stage, A for back stage");
+            telemetry.update();
+            if (gamepad1.y) {
+                front = true;
+                back = false;
+                stageSelected = true;
+            }
+            if (gamepad1.a) {
+                front = false;
+                back = true;
+                stageSelected = true;
+            }
         }
         waitForStart();
 
 
-        while (opModeIsActive() && !Moved ) {
+        while (opModeIsActive() && !Moved) {
             timeFrom.startTime();
 
-            AutoMove(pos);
+            AutoMove(pos.getPosition());
             Moved = true;
             sleep(10000000);
-
 
 
             telemetry.update();  // Update telemetry
@@ -228,29 +236,8 @@ public class TestingEncoder extends LinearOpMode {
         }
 
 
-        // Step through each leg of the path,
-        // Note: Reverse movement is obtained by setting a negative distance (not speed)
-        // encoderDrive(DRIVE_SPEED,  47*.75,  47*.75, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-        // driveTurn(90,false,1.0,5.0);
-        //encoderDrive(TURN_SPEED,   turn, -turn, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
-        // encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
-
-
-//
-//        telemetry.addData("Path", "Complete");
-//        telemetry.update();
-//        sleep(1000);  // pause to display final telemetry message.
-
     }
 
-    /*
-     *  Method to perform a relative move, based on encoder counts.
-     *  Encoders are not reset as the move is based on the current position.
-     *  Move will stop if any of three conditions occur:
-     *  1) Move gets to the desired position
-     *  2) Move runs out of time
-     *  3) Driver stops the OpMode running.
-     */
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
@@ -319,13 +306,13 @@ public class TestingEncoder extends LinearOpMode {
 
                 // DetectID = 477;
 
-                telemetry.addData("DETECT", "477");
+                telemetry.addData("DETECT", location);
                 telemetry.update();
                 if (location ==1) {
 
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    driveTurn(45, false, 1.0, 5.0);
+                   // driveTurn(45, false, 1.0, 5.0);
                     double distance1 = 20;
                     double adjust = .75;
                     double move1 = distance1 * adjust;
@@ -453,9 +440,9 @@ public class TestingEncoder extends LinearOpMode {
 
                 AlreadyDetect = true;
                 Moved = true;
-                //}
-            }
-            if (blueSide&back) {//RedFrontStage
+                }
+          //  }
+            if (blueSide&back) {//blue back
 
                 // DetectID = 477;
 
@@ -465,7 +452,7 @@ public class TestingEncoder extends LinearOpMode {
 
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    driveTurn(45, false, 1.0, 5.0);
+                   // driveTurn(45, false, 1.0, 5.0);
                     double distance1 = 20;
                     double adjust = .75;
                     double move1 = distance1 * adjust;
@@ -660,11 +647,15 @@ public class TestingEncoder extends LinearOpMode {
 
 }
 class PipelineRed extends OpenCvPipeline {
+    public int get(){
+        return 1;
+    }
     private final Telemetry telemetry;
-    private int pos;
-    public PipelineRed(Telemetry telemetry, int pos) {
+    Position pos = new Position();
+    public PipelineRed(Telemetry telemetry) {
         this.telemetry = telemetry;
-        this.pos = pos;
+
+
     }
 
     Mat YCbCr = new Mat();
@@ -678,12 +669,12 @@ class PipelineRed extends OpenCvPipeline {
     Scalar rectColor = new Scalar(255, 0, 0);
     TestingEncoder test = new TestingEncoder();
     @Override
-    public Mat processFrame(Mat input) {
+    public  Mat processFrame(Mat input) {
         Imgproc.cvtColor(input, YCbCr, Imgproc.COLOR_RGB2YCrCb);
 
-        Rect leftR = new Rect(1, 1, 212, 479);
-        Rect centerR = new Rect(214,1,212,479); // Center
-        Rect rightR = new Rect(428, 1, 212, 479);
+        Rect leftR = new Rect(1, 240, 212, 239);
+        Rect centerR = new Rect(214,240,212,239); // Center
+        Rect rightR = new Rect(428, 240, 212, 239);
 
         input.copyTo(output);
         Imgproc.rectangle(output, leftR, rectColor, 2);
@@ -692,7 +683,6 @@ class PipelineRed extends OpenCvPipeline {
 
         leftCrop = YCbCr.submat(leftR);
         centerCrop = YCbCr.submat(centerR);
-
         rightCrop = YCbCr.submat(rightR);
 
         Scalar leftAvg = Core.mean(leftCrop);
@@ -705,18 +695,21 @@ class PipelineRed extends OpenCvPipeline {
 
         if (leftAvgFin > rightAvgFin && leftAvgFin > centerAvgFin) {
             telemetry.addData("OpenCV", "Right");
-            pos = 3;
-            test.setPos(pos);
+            TestingEncoder.pos.setPosition(3);
+            System.out.println("Pos 3");
+
         }
-        if (rightAvgFin > leftAvgFin && rightAvgFin > centerAvgFin) {
+         if (rightAvgFin > leftAvgFin && rightAvgFin > centerAvgFin) {
             telemetry.addData("OpenCV", "Left");
-            pos=1;
-            test.setPos(pos);
+            TestingEncoder.pos.setPosition(1);
+            System.out.println("Pos 1");
+
         }
         if (centerAvgFin > leftAvgFin && centerAvgFin > rightAvgFin) {
             telemetry.addData("OpenCV", "Center");
-            pos=2;
-            test.setPos(pos);
+            TestingEncoder.pos.setPosition(2);
+            System.out.println("Pos 2");
+
         }
         else {
             telemetry.addData("OpenCV", "None");
@@ -725,6 +718,7 @@ class PipelineRed extends OpenCvPipeline {
         telemetry.update();
         return output;
     }
+
 }
 
 

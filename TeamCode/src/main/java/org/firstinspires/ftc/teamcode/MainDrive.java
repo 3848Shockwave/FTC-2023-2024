@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.util.concurrent.locks.Lock;
+
 @TeleOp(name="Main Drive", group="Linear OpMode")
 public class MainDrive extends LinearOpMode {
 
@@ -51,6 +53,11 @@ public class MainDrive extends LinearOpMode {
             BackLeft.setDirection(DcMotor.Direction.REVERSE);
             FrontRight.setDirection(DcMotor.Direction.FORWARD);
             BackRight.setDirection(DcMotor.Direction.FORWARD);
+            BackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            BackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            FrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            FrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            Worm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             // Wait for the game to start (driver presses PLAY)
             telemetry.addData("Status", "Initialized");
@@ -66,11 +73,21 @@ public class MainDrive extends LinearOpMode {
 
                 // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
                 double axial   = gamepad1.right_stick_y;
-                double axial2   = gamepad1.left_stick_y;// Note: pushing stick forward gives negative value
+                double axial2   = gamepad1.left_stick_y;
+                // Note: pushing stick forward gives negative value
                 double lateral =  gamepad1.right_trigger;
                 double lateral1 =  gamepad1.left_trigger;
                 double lateral2 =  -gamepad1.left_stick_x;
                 double yaw     =  -gamepad1.right_stick_x;
+                if(gamepad1.left_bumper){
+                    yaw = .35*yaw;
+                }
+                if(gamepad1.dpad_up){
+                    axial2= -1;
+                }
+                if(gamepad1.dpad_down){
+                    axial2= 1;
+                }
                 double worm =   gamepad2.left_stick_y;
                 // Combine the joystick requests for each axis-motion to determine each wheel's power.
                 // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -96,14 +113,14 @@ public class MainDrive extends LinearOpMode {
                     worm/=max1;
                 }
 
-                if (gamepad2.left_trigger>0){
+                if (gamepad2.left_bumper){
                     ArmMotor.setPower(1);
-                    sleep(sleepTime);
+                    //sleep(50);
                     ArmMotor.setPower(0);
                 }
-                if (gamepad2.right_trigger>0){
+                if (gamepad2.right_bumper){
                     ArmMotor.setPower(-1);
-                    sleep(sleepTime);
+                    //sleep(50);
                     ArmMotor.setPower(0);
                 }
 //            og worm code but milan no like    if (gamepad2.left_stick_y<0){
@@ -116,16 +133,41 @@ public class MainDrive extends LinearOpMode {
 //                    sleep(50);
 //                    Worm.setPower(0);
 //                }
-                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()+increment<1){
-                    ArmServo.setPosition(ArmServo.getPosition()+increment);
+                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()+.002<1){
+                    ArmServo.setPosition(ArmServo.getPosition()+.002);
 
-                    sleep(sleepTime);
+                    sleep(1);
                 }
-                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()-increment>0){
-                    ArmServo.setPosition(ArmServo.getPosition()-increment);
-                    sleep(sleepTime);
+                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()-.002>0){
+                    ArmServo.setPosition(ArmServo.getPosition()-.002);
+                    sleep(1);
                 }
+                if(gamepad2.x){
+                    if (ClawServoL.getPosition()!=-1||ClawServoR.getPosition()!=1) {
+                        ClawServoR.setPosition(1);
+                        ClawServoL.setPosition(-1);
 
+                    }
+                        sleep(350);
+                        if (ClawServoL.getPosition()==-1||ClawServoR.getPosition()==1) {
+                            if (ArmServo.getPosition()!=1){
+                            ArmServo.setPosition(1);
+                        }
+
+                    }
+
+                }
+                if(gamepad2.a) {
+                    if (ClawServoL.getPosition() != .4) {
+                        ClawServoL.setPosition(.4);
+                    }
+                    if (ClawServoR.getPosition() !=.5) {
+                        ClawServoR.setPosition(.5);
+                    }
+                    if (ArmServo.getPosition() != .6) {
+                        ArmServo.setPosition(.6);
+                    }
+                }
                 if(gamepad2.b&& !clawR) {
                     if(ClawServoR.getPosition() == .5) ClawServoR.setPosition(1);
                     else ClawServoR.setPosition(.5);

@@ -32,7 +32,7 @@ public class MainDrive extends LinearOpMode {
     boolean checkThree = false;
     boolean Reload = false;
     long sleepTime = 50;
-    double speedLimit = .75;
+    double speedLimit = 1;
         @Override
         public void runOpMode() {
 
@@ -47,7 +47,7 @@ public class MainDrive extends LinearOpMode {
             ClawServoR = hardwareMap.get(Servo.class, "ClawServoR");
             ClawServoL = hardwareMap.get(Servo.class, "ClawServoL");
             Worm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            //LaunchServo = hardwareMap.get(Servo.class, "LaunchServo");
+            LaunchServo = hardwareMap.get(Servo.class, "LaunchServo");
             Worm.setDirection(DcMotorSimple.Direction.REVERSE);
             FrontLeft.setDirection(DcMotor.Direction.REVERSE);
             BackLeft.setDirection(DcMotor.Direction.REVERSE);
@@ -79,14 +79,12 @@ public class MainDrive extends LinearOpMode {
                 double lateral1 =  gamepad1.left_trigger;
                 double lateral2 =  -gamepad1.left_stick_x;
                 double yaw     =  -gamepad1.right_stick_x;
-                if(gamepad1.left_bumper){
-                    yaw = .35*yaw;
-                }
+
                 if(gamepad1.dpad_up){
-                    axial2= -1;
+                    yaw= -.14;
                 }
                 if(gamepad1.dpad_down){
-                    axial2= 1;
+                    yaw= .14;
                 }
                 double worm =   gamepad2.left_stick_y;
                 // Combine the joystick requests for each axis-motion to determine each wheel's power.
@@ -133,12 +131,12 @@ public class MainDrive extends LinearOpMode {
 //                    sleep(50);
 //                    Worm.setPower(0);
 //                }
-                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()+.002<1){
+                if (gamepad2.right_stick_y<0&&ArmServo.getPosition()+.002<=1){
                     ArmServo.setPosition(ArmServo.getPosition()+.002);
 
                     sleep(1);
                 }
-                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()-.002>0){
+                if (gamepad2.right_stick_y>0&&ArmServo.getPosition()-.002>=.3){
                     ArmServo.setPosition(ArmServo.getPosition()-.002);
                     sleep(1);
                 }
@@ -178,25 +176,19 @@ public class MainDrive extends LinearOpMode {
                     else ClawServoL.setPosition(.4);
                     clawL = true;
                 } else if(!gamepad2.y) clawL = false;
-                if (gamepad1.dpad_up){
+                if (gamepad2.dpad_up){
                     checkOne=true;
                 }
-                if (gamepad1.left_bumper){
+                if (gamepad2.left_trigger>0){
                     checkTwo=true;
                 }
-                if (gamepad1.b){
-                    checkThree=true;
-                }
-                if (gamepad1.x){
-                    Reload=true;
-                }
 
-                if(checkOne&&checkTwo&&checkThree){
+
+
+                if(checkOne&&checkTwo){
                     LaunchServo.setPosition(0);
                 }
-                if(checkOne&&checkTwo&&Reload){
-                    LaunchServo.setPosition(1);
-                }
+
 
                 // Send calculated power to wheels
                 FrontLeft.setPower(speedLimit*leftFrontPower);

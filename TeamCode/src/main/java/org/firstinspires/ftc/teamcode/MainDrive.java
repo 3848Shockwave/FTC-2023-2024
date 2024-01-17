@@ -190,31 +190,34 @@ public class MainDrive extends LinearOpMode {
             if (gamepad2.left_trigger > 0) {
                 checkTwo = true;
             }
-            if ((gamepad2.left_bumper && gamepad2.y)) {
-                WristAngleMove = !WristAngleMove;
+            if (gamepad2.left_trigger>0) {
+             WristAngleMove=true;
             }
+            else{
+                WristAngleMove=false;
+            }
+
             if (WristAngleMove) {
                 wristAngle = 60 + armAngle;
                 ArmServo.setPosition(mapRange(wristAngle, 0, 180, .3, 1));
             }
-            if ((gamepad2.left_bumper && gamepad2.y) && WristAngleMove) {
-                WristAngleMove = false;
-            }
+
 
 
             if (checkOne && checkTwo) {
                 LaunchServo.setPosition(0);
             }
-
+            if (armAngle<5&&gamepad2.left_stick_y>0){
+                wormPower=0;
+            }
 
             // Send calculated power to wheels
             FrontLeft.setPower(speedLimit * leftFrontPower);
             FrontRight.setPower(speedLimit * rightFrontPower);
             BackLeft.setPower(speedLimit * leftBackPower);
             BackRight.setPower(speedLimit * rightBackPower);
-            if (armAngle>1) {
-                Worm.setPower(wormPower);
-            }
+            Worm.setPower(wormPower);
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime);
 

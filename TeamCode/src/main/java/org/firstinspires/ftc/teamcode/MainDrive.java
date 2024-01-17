@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 @TeleOp(name="Main Drive", group="Linear OpMode")
@@ -24,6 +25,7 @@ public class MainDrive extends LinearOpMode {
         Servo ClawServoR;
         Servo ClawServoL;
         Servo LaunchServo;
+        boolean test = true;
         double increment = .2;
     boolean checkOne = false;
     boolean checkTwo = false;
@@ -32,6 +34,8 @@ public class MainDrive extends LinearOpMode {
     boolean checkThree = false;
     boolean Reload = false;
     long sleepTime = 50;
+    double wristAngle = 0;
+    double armAngle  = 0;
     double speedLimit = 1;
         @Override
         public void runOpMode() {
@@ -68,6 +72,7 @@ public class MainDrive extends LinearOpMode {
 
             // run until the end of the match (driver presses STOP)
             while (opModeIsActive()) {
+                armAngle= mapRange((-1*((Worm.getCurrentPosition()/28)*19.2)*360),-172800,1800000,0,180);
                 double max;
                 double max1;
 
@@ -190,6 +195,7 @@ public class MainDrive extends LinearOpMode {
                 }
 
 
+
                 // Send calculated power to wheels
                 FrontLeft.setPower(speedLimit*leftFrontPower);
                 FrontRight.setPower(speedLimit*rightFrontPower);
@@ -200,7 +206,17 @@ public class MainDrive extends LinearOpMode {
                 telemetry.addData("Status", "Run Time: " + runtime.toString());
 
             }
-        }}
+        }
+    public static double mapRange(double value, double fromMin, double fromMax, double toMin, double toMax) {
+        // Ensure the value is within the source range
+        value = Math.max(fromMin, Math.min(value, fromMax));
+
+        // Calculate the normalized position of the value in the source range
+        double normalized = (value - fromMin) / (fromMax - fromMin);
+
+        // Map the normalized value to the target range
+        return toMin + normalized * (toMax - toMin);
+    }}
 
 
 

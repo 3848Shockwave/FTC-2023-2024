@@ -212,7 +212,9 @@ public class MainDrive extends LinearOpMode {
             FrontRight.setPower(speedLimit * rightFrontPower);
             BackLeft.setPower(speedLimit * leftBackPower);
             BackRight.setPower(speedLimit * rightBackPower);
-            Worm.setPower(wormPower);
+            if (armAngle>1) {
+                Worm.setPower(wormPower);
+            }
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime);
 

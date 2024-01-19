@@ -137,13 +137,13 @@ public class MainDrive extends LinearOpMode {
                 //sleep(50);
                 ArmMotor.setPower(0);
             }
-            if (gamepad2.right_stick_y < 0 && ArmServo.getPosition() + .002 <= 1) {
-                ArmServo.setPosition(ArmServo.getPosition() + .002);
+            if (gamepad2.right_stick_y < 0 && ArmServo.getPosition() + .02 <= 1) {
+                ArmServo.setPosition(ArmServo.getPosition() + .02);
 
                 sleep(1);
             }
-            if (gamepad2.right_stick_y > 0 && ArmServo.getPosition() - .002 >= .3) {
-                ArmServo.setPosition(ArmServo.getPosition() - .002);
+            if (gamepad2.right_stick_y > 0 && ArmServo.getPosition() - .02 >= .3) {
+                ArmServo.setPosition(ArmServo.getPosition() - .02);
                 sleep(1);
             }
             if (gamepad2.x) {
@@ -190,15 +190,14 @@ public class MainDrive extends LinearOpMode {
             if (gamepad2.left_trigger > 0) {
                 checkTwo = true;
             }
-            if (gamepad2.left_trigger>0) {
-             WristAngleMove=true;
-            }
-            else{
-                WristAngleMove=false;
+            if (gamepad2.right_trigger>0) {
+                WristAngleMove= !WristAngleMove;
+
             }
 
+
             if (WristAngleMove) {
-                wristAngle = 60 + armAngle;
+                wristAngle = 180+armAngle-50;
                 ArmServo.setPosition(mapRange(wristAngle, 0, 180, .3, 1));
             }
 
@@ -210,7 +209,8 @@ public class MainDrive extends LinearOpMode {
             if (armAngle<5&&gamepad2.left_stick_y>0){
                 wormPower=0;
             }
-
+            telemetry.addData("Status",extensionInches);
+            telemetry.update();
             // Send calculated power to wheels
             FrontLeft.setPower(speedLimit * leftFrontPower);
             FrontRight.setPower(speedLimit * rightFrontPower);

@@ -78,9 +78,12 @@ public class MainDrive extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            armAngle = mapRange((-1 * (((double) Worm.getCurrentPosition() / 28) * 19.2) * 360), -172800, 1800000, 0, 180);
+
+            armAngle = mapRange((-1 * (((double) Worm.getCurrentPosition() / 28) * 19.2) * 360), -590000, 1500000, 0, 180);
+            telemetry.addData("angle", armAngle);
             //22.2816920329 is how many counts per inch extension maybe
-            extensionInches = ArmMotor.getCurrentPosition() / 22.2816920329;
+            //1050 counts per inch.
+            extensionInches = 1;//FIX
             wristAngle = mapRange(ArmServo.getPosition(), .3, 1, 0, 180);
 
             double max;
@@ -137,13 +140,13 @@ public class MainDrive extends LinearOpMode {
                 //sleep(50);
                 ArmMotor.setPower(0);
             }
-            if (gamepad2.right_stick_y < 0 && ArmServo.getPosition() + .02 <= 1) {
-                ArmServo.setPosition(ArmServo.getPosition() + .02);
+            if (gamepad2.right_stick_y < 0 && ArmServo.getPosition() + .004 <= 1) {
+                ArmServo.setPosition(ArmServo.getPosition() + .004);
 
                 sleep(1);
             }
-            if (gamepad2.right_stick_y > 0 && ArmServo.getPosition() - .02 >= .3) {
-                ArmServo.setPosition(ArmServo.getPosition() - .02);
+            if (gamepad2.right_stick_y > 0 && ArmServo.getPosition() - .004 >= .3) {
+                ArmServo.setPosition(ArmServo.getPosition() - .004);
                 sleep(1);
             }
             if (gamepad2.x) {
@@ -162,25 +165,25 @@ public class MainDrive extends LinearOpMode {
 
             }
             if (gamepad2.a) {
-                if (ClawServoL.getPosition() != .4) {
-                    ClawServoL.setPosition(.4);
+                if (ClawServoL.getPosition() != .9) {
+                    ClawServoL.setPosition(.9);
                 }
-                if (ClawServoR.getPosition() != .5) {
-                    ClawServoR.setPosition(.5);
+                if (ClawServoR.getPosition() != .4) {
+                    ClawServoR.setPosition(.4);
                 }
                 if (ArmServo.getPosition() != .6) {
                     ArmServo.setPosition(.6);
                 }
             }
             if (gamepad2.b && !clawR) {
-                if (ClawServoR.getPosition() == .5) ClawServoR.setPosition(1);
-                else ClawServoR.setPosition(.5);
+                if (ClawServoR.getPosition() == .4) ClawServoR.setPosition(.9);
+                else ClawServoR.setPosition(.4);
                 clawR = true;
             } else if (!gamepad2.b) clawR = false;
             if (!gamepad2.left_bumper) {
                 if ((gamepad2.y) && !clawL) {
-                    if (ClawServoL.getPosition() == .4) ClawServoL.setPosition(-1);
-                    else ClawServoL.setPosition(.4);
+                    if (ClawServoL.getPosition() == .2) ClawServoL.setPosition(.9);
+                    else ClawServoL.setPosition(.2);
                     clawL = true;
                 } else if (!gamepad2.y) clawL = false;
             }
@@ -190,14 +193,14 @@ public class MainDrive extends LinearOpMode {
             if (gamepad2.left_trigger > 0) {
                 checkTwo = true;
             }
-            if (gamepad2.right_trigger>0) {
+            if (gamepad2.right_trigger >0) {
                 WristAngleMove= !WristAngleMove;
 
             }
 
 
             if (WristAngleMove) {
-                wristAngle = 180+armAngle-50;
+                wristAngle = 180-armAngle-50;
                 ArmServo.setPosition(mapRange(wristAngle, 0, 180, .3, 1));
             }
 

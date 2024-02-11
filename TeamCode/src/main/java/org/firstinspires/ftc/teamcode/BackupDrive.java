@@ -7,10 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-@TeleOp(name = "Main Drive", group = "Linear OpMode")
-public class MainDrive extends LinearOpMode {
+@TeleOp(name = "Backup", group = "Linear OpMode")
+public class BackupDrive extends LinearOpMode {
 
     final double speedLimit = 1;
     // Declare OpMode members for each of the 4 motors.
@@ -98,7 +96,7 @@ public class MainDrive extends LinearOpMode {
             }
             telemetry.addData("extension", extensionInches);
 
-            wristAngle = mapRange(ArmServo.getPosition(), 0, 1, 0, 180);
+            wristAngle = mapRange(ArmServo.getPosition(), .3, 1, 0, 180);
 
             double max;
             double max1;
@@ -110,7 +108,7 @@ public class MainDrive extends LinearOpMode {
             double lateral = gamepad1.right_trigger;
             double lateral1 = gamepad1.left_trigger;
             double lateral2 = -gamepad1.left_stick_x;
-            double yaw = -gamepad1.right_stick_x*.75;
+            double yaw = -gamepad1.right_stick_x;
 
             if (gamepad1.dpad_up) {
                 yaw = -.14;
@@ -161,7 +159,7 @@ public class MainDrive extends LinearOpMode {
 
                 sleep(1);
             }
-            if (gamepad2.right_stick_y > 0 && ArmServo.getPosition() - .006 >= 0) {
+            if (gamepad2.right_stick_y > 0 && ArmServo.getPosition() - .006 >= .3) {
                 ArmServo.setPosition(ArmServo.getPosition() - .006);
                 sleep(1);
             }
@@ -239,13 +237,11 @@ public class MainDrive extends LinearOpMode {
 
 
             if (checkOne && checkTwo) {
-                LaunchServo.setDirection(Servo.Direction.FORWARD);
-
-                LaunchServo.setPosition(1);
+                LaunchServo.setPosition(0);
             }
-            if (armAngle<5&&gamepad2.left_stick_y>0){
-                wormPower=0;
-            }
+//            if (armAngle<5&&gamepad2.left_stick_y>0){
+//                wormPower=0;
+//            }
             telemetry.addData("Status",extensionInches);
             telemetry.update();
             // Send calculated power to wheels

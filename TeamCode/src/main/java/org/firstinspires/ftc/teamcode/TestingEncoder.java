@@ -65,10 +65,12 @@ public class TestingEncoder extends LinearOpMode {
     static final double TURN_SPEED = 0.5;
     static OpenCvCamera cam = null;
     public static Position pos = new Position();
-
+    double armAngle;
+    double extensionInches ;
 
     @Override
     public void runOpMode() {
+
         pos.startTime();
         telemetry.addData("Status", "Initializing...");
         telemetry.update();
@@ -156,6 +158,15 @@ public class TestingEncoder extends LinearOpMode {
         sleep(1000);
 
         while (opModeIsActive()&&!Moved) {
+            armAngle =  mapRange((-1 * (((double) Worm.getCurrentPosition() / 28) * 19.2) * 360), -24000, 2000000, 0, 180);
+            extensionInches= Math.abs( ArmMotor.getCurrentPosition());
+            if (extensionInches<0){
+                extensionInches=0;
+
+            }
+            else {
+                extensionInches =  (-1*((double) ArmMotor.getCurrentPosition() /1053));//FIX
+            }
 
                 timeFrom.startTime();
                 AutoMove(pos.getPosition());
@@ -208,47 +219,28 @@ public class TestingEncoder extends LinearOpMode {
                     double distance1 = 20;
                     double adjust = .75;
                     double move1 = distance1 * adjust;
-                    encoderDrive(DRIVE_SPEED, 20 , 20 , 5.0);
-                    driveTurn(85, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 18 , 18 , 5.0);
+                    driveTurn(90, true, 1.0, 5.0);
                     encoderDrive(DRIVE_SPEED, -11 * .75, -10 * .75, 5.0);
 
-                    ArmMotor.setPower(1);
-                    sleep(2300);
-                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                    ArmServo.setPosition(.6);
-                    sleep(2000);
-                    ClawServoR.setPosition(.5);
-                    sleep(500);
+                    Extend(1,7.5,1.0);
+                    ArmServo.setPosition(.3);
+                    ClawServoR.setPosition(.4);
                     ArmServo.setPosition(1);
-                    ArmMotor.setPower(-1);
-                    sleep(1000);
-                    ArmMotor.setPower(0);
                     // for worm: 1 unit = 2.25 degrees
-                    driveTurn(160, false, 1.0, 5.0);
-                    double distance2 = 19;
+                    driveTurn(90, false, 1.0, 5.0);
+                    double distance2 = 18;
                     double move2 = distance2 * adjust;
                     encoderDrive(DRIVE_SPEED, move2, move2, 5.0);
-                    driveTurn(85, false, 1.0, 5.0);
-                    double distance3 = 15;
+                    driveTurn(90, false, 1.0, 5.0);
+                    double distance3 = 36;
                     double move3 = distance3 * adjust;
                     encoderDrive(DRIVE_SPEED, move3, move3, 5.0);
                     driveTurn(90, true, 1.0, 5.0);
-                    double distance4 = 6;
-                    double move4 = distance4 * adjust;
-                    encoderDrive(DRIVE_SPEED, move4, move4, 5.0);
-                    ArmMotor.setPower(1);
-                    sleep(500);
-                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                    ArmServo.setPosition(.6);
-                    sleep(2000);
-                    ClawServoL.setPosition(.5);
-                    sleep(500);
+                    Extend(1,7.5,1.0);
+                    ArmServo.setPosition(.3);
+                    ClawServoL.setPosition(.4);
                     ArmServo.setPosition(1);
-                    ArmMotor.setPower(-1);
-                    sleep(1000);
-                    ArmMotor.setPower(0);
 
                     Moved = true;
                     // break;
@@ -256,35 +248,19 @@ public class TestingEncoder extends LinearOpMode {
                 if (location ==2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, 19 * .75, 19 * .75, 5.0);
                     driveTurn(15, false, 1.0, 5.0);
-                    ArmMotor.setPower(1);
-                    sleep(2000);
-                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-                    ArmServo.setPosition(.6);
-                    sleep(2300);
-                    ClawServoR.setPosition(.5);
-                    sleep(500);
+                    Extend(1,7.5,1.0);
+                    ArmServo.setPosition(.3);
+                    ClawServoR.setPosition(.4);
                     ArmServo.setPosition(1);
-                    ArmMotor.setPower(-1);
-                    sleep(1000);
-                    ArmMotor.setPower(0);
-                    driveTurn(15, true, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -13 * .75, -13 * .75, 5.0);
-                    driveTurn(87, false, 1.0, 5.0);
+                    Extend(1,.5,5.0);
+                    encoderDrive(DRIVE_SPEED, -18 * .75, -18 * .75, 5.0);
+                    driveTurn(90, true, 1.0, 5.0);
                     encoderDrive(DRIVE_SPEED, 36 * .75, 36 * .75, 5.0);
-                    ArmMotor.setPower(1);
-                    sleep(500);
-                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                    ArmServo.setPosition(.6);
-                    sleep(2000);
-                    ClawServoL.setPosition(.5);
-                    sleep(500);
-                    ArmServo.setPosition(1);
-                    ArmMotor.setPower(-1);
-                    sleep(1000);
-                    ArmMotor.setPower(0);
+                    Extend(1,7.5,5.0);
+                    ArmServo.setPosition(.1);
+                    ClawServoL.setPosition(.4);
 
                     Moved = true;
                     //break;
@@ -293,38 +269,22 @@ public class TestingEncoder extends LinearOpMode {
                 if (location ==3) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
-                    driveTurn(87.5, false, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, -11 * .75, -11 * .75, 5.0);
-                    ArmMotor.setPower(1);
-                    sleep(2300);
-                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-                    ArmServo.setPosition(.6);
-                    sleep(2000);
-                    ClawServoR.setPosition(.5);
-                    sleep(500);
-                    ArmServo.setPosition(1);
-                    ArmMotor.setPower(-1);
-                    sleep(1000);
-                    ArmMotor.setPower(0);
-                    encoderDrive(DRIVE_SPEED, 8 * .75, 8 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
                     driveTurn(90, false, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, 17 * .75, 17 * .75, 5.0);
-                    driveTurn(94, true, 1.0, 5.0);
-                    encoderDrive(DRIVE_SPEED, 37 * .75, 37 * .75, 5.0);
-                    ArmMotor.setPower(1);
-                    sleep(500);
-                    ArmMotor.setPower(0);// for worm: 1 unit = 2.25 degrees
-
-                    ArmServo.setPosition(.6);
-                    sleep(2000);
-                    ClawServoL.setPosition(.5);
-                    sleep(500);
+                    encoderDrive(DRIVE_SPEED, -10 * .75, -10* .75, 5.0);
+                    Extend(1,7.5,1.0);
+                    ArmServo.setPosition(.3);
+                    ClawServoR.setPosition(.4);
                     ArmServo.setPosition(1);
-                    ArmMotor.setPower(-1);
-                    sleep(1000);
-                    ArmMotor.setPower(0);
-                    encoderDrive(DRIVE_SPEED, 3.5 * .75, 3.5 * .75, 5.0);
+                    encoderDrive(DRIVE_SPEED, 9 * .75, 9 * .75, 5.0);
+                    driveTurn(90, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 17 * .75, 17 * .75, 5.0);
+                    driveTurn(90, true, 1.0, 5.0);
+                    encoderDrive(DRIVE_SPEED, 36 * .75, 36 * .75, 5.0);
+                    Extend(1,7.5,1.0);
+                    ArmServo.setPosition(.3);
+                    ClawServoL.setPosition(.4);
+                    ArmServo.setPosition(1);
                     Moved = true;
                     // break;
                 }
@@ -333,7 +293,7 @@ public class TestingEncoder extends LinearOpMode {
                 Moved = true;
             }
             //  }
-            if (blueSide&back) {//blue back
+            if (blueSide&&back) {//blue back
 
                 // DetectID = 477;
 
@@ -572,32 +532,46 @@ public class TestingEncoder extends LinearOpMode {
             }
         }
     }
+    public void Extend(double speed, double extend, double timeoutS){
+        if (opModeIsActive()){
+            double error =.5;
+            while(Math.abs(extend-extensionInches)>error&&opModeIsActive()) {
+                if (extend<extensionInches){
+                    ArmMotor.setPower(-1);
+                }
+                else {
+                    ArmMotor.setPower(1);
+                }
+            }
+            ArmMotor.setPower(0);
 
+        }
+        sleep(250);
+    }
     public void ArmDrive(double speed,
-                         double wormRotate, double extend,
+                         double wormRotate,
                          double timeoutS) {
         int newWormTarget;
-        int newExtendTarget;
+
 
         // Ensure that the OpMode is still active
         if (opModeIsActive()) {
 
 
             // Determine new target position, and pass to motor controller
-            newWormTarget = Worm.getCurrentPosition() + (int) (wormRotate / 2.25 * COUNTS_PER_INCH);
-            newExtendTarget = ArmMotor.getCurrentPosition() + (int) (extend * COUNTS_PER_INCH);
+            while (armAngle != wormRotate&&opModeIsActive()){
+                if(wormRotate<armAngle){
+                    Worm.setPower(-1);
+                }
+                else {
+                    Worm.setPower(1);
+                }
+            }
 
-            Worm.setTargetPosition(newWormTarget);
-            ArmMotor.setTargetPosition(newExtendTarget);
 
-            // Turn On RUN_TO_POSITION
-            Worm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            ArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // reset the timeout time and start motion.
             // runtime.reset();
-            Worm.setPower(Math.abs(speed));
-            ArmMotor.setPower(Math.abs(speed));
 
 
             // keep looping while we are still active, and there is time left, and both motors are running.
@@ -610,12 +584,10 @@ public class TestingEncoder extends LinearOpMode {
 
             // Stop all motion;
             Worm.setPower(0);
-            ArmMotor.setPower(0);
 
-            // Turn off RUN_TO_POSITION
-            Worm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            ArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+
+            sleep(250);
 
             //sleep(250);   // optional pause after each move.
         }
@@ -695,7 +667,16 @@ public class TestingEncoder extends LinearOpMode {
         encoderDrive(speed, turn, -turn, maxTime);
     }
 
+    public static double mapRange(double value, double fromMin, double fromMax, double toMin, double toMax) {
+        // Ensure the value is within the source range
+        value = Math.max(fromMin, Math.min(value, fromMax));
 
+        // Calculate the normalized position of the value in the source range
+        double normalized = (value - fromMin) / (fromMax - fromMin);
+
+        // Map the normalized value to the target range
+        return toMin + normalized * (toMax - toMin);
+    }
 }
 
 class PipelineRed extends OpenCvPipeline {
@@ -727,9 +708,9 @@ class PipelineRed extends OpenCvPipeline {
         Imgproc.cvtColor(input, YCbCr, Imgproc.COLOR_BGR2YCrCb);
 
         // Define the regions of interest
-        Rect leftR = new Rect(1, 1, 212, 479);
-        Rect centerR = new Rect(214, 1, 212, 479);
-        Rect rightR = new Rect(428, 1, 212, 479);
+        Rect leftR = new Rect(1, 80, 212, 350);
+        Rect centerR = new Rect(214, 60, 212, 350);
+        Rect rightR = new Rect(428, 60, 212, 350);
 
         input.copyTo(output);
         Imgproc.rectangle(output, leftR, rectColor, 2);
@@ -749,44 +730,44 @@ class PipelineRed extends OpenCvPipeline {
 //             pixelCountRight = countPixelsInRange(rightCrop, lowerBoundRed, upperBoundRed);
 //        }
 //        if (TestingEncoder.blueSide) {
-            pixelCountLeft = countPixelsInRange(leftCrop, lowerBoundBlue, upperBoundBlue);
-            pixelCountCenter = countPixelsInRange(centerCrop, lowerBoundBlue, upperBoundBlue);
-            pixelCountRight = countPixelsInRange(rightCrop, lowerBoundBlue, upperBoundBlue);
+//            pixelCountLeft = countPixelsInRange(leftCrop, lowerBoundBlue, upperBoundBlue);
+//            pixelCountCenter = countPixelsInRange(centerCrop, lowerBoundBlue, upperBoundBlue);
+//            pixelCountRight = countPixelsInRange(rightCrop, lowerBoundBlue, upperBoundBlue);
       //  }
 
 
 
         // Print pixel counts for debugging using telemetry
-        telemetry.addData("Left pixels", pixelCountLeft);
-        telemetry.addData("Center pixels", pixelCountCenter);
-        telemetry.addData("Right pixels", pixelCountRight);
-        if (pixelCountLeft!=0||pixelCountCenter!=0||pixelCountRight!=0) {
-
-
-            // Determine position based on pixel counts
-            if (pixelCountLeft > pixelCountRight && pixelCountLeft > pixelCountCenter) {
-                telemetry.addData("OpenCV", "Right");
-                TestingEncoder.pos.setPosition(3);
-                telemetry.addData("Position", "3");
-                TestingEncoder.cam.closeCameraDevice();
-                telemetry.update();
-
-            } else if (pixelCountRight > pixelCountLeft && pixelCountRight > pixelCountCenter) {
-                telemetry.addData("OpenCV", "Left");
-                TestingEncoder.pos.setPosition(1);
-                telemetry.addData("Position", "1");
-                telemetry.update();
-                TestingEncoder.cam.closeCameraDevice();
-
-            } else if (pixelCountCenter > pixelCountLeft && pixelCountCenter > pixelCountRight) {
-                telemetry.addData("OpenCV", "Center");
-                TestingEncoder.pos.setPosition(2);
-                telemetry.addData("Position", "2");
-            } else {
-                telemetry.addData("OpenCV", "None");
-                telemetry.addData("Position", "No position detected");
-            }
-        }
+//        telemetry.addData("Left pixels", pixelCountLeft);
+//        telemetry.addData("Center pixels", pixelCountCenter);
+//        telemetry.addData("Right pixels", pixelCountRight);
+//        if (pixelCountLeft!=0||pixelCountCenter!=0||pixelCountRight!=0) {
+//
+//
+//            // Determine position based on pixel counts
+//            if (pixelCountLeft > pixelCountRight && pixelCountLeft > pixelCountCenter) {
+//                telemetry.addData("OpenCV", "Right");
+//                TestingEncoder.pos.setPosition(3);
+//                telemetry.addData("Position", "3");
+//                TestingEncoder.cam.closeCameraDevice();
+//                telemetry.update();
+//
+//            } else if (pixelCountRight > pixelCountLeft && pixelCountRight > pixelCountCenter) {
+//                telemetry.addData("OpenCV", "Left");
+//                TestingEncoder.pos.setPosition(1);
+//                telemetry.addData("Position", "1");
+//                telemetry.update();
+//                TestingEncoder.cam.closeCameraDevice();
+//
+//            } else if (pixelCountCenter > pixelCountLeft && pixelCountCenter > pixelCountRight) {
+//                telemetry.addData("OpenCV", "Center");
+//                TestingEncoder.pos.setPosition(2);
+//                telemetry.addData("Position", "2");
+//            } else {
+//                telemetry.addData("OpenCV", "None");
+//                telemetry.addData("Position", "No position detected");
+//            }
+//        }
         double avgLeft = 0;
         double avgCenter = 0;
         double avgRight = 0;

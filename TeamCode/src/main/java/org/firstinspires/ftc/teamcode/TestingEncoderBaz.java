@@ -2,6 +2,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Size;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,6 +12,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -25,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Autonomous(name = "Robot: Auto", group = "Robot")
+@Autonomous(name = "Robot: Auto (BAZ)", group = "Robot")
 
-public class TestingEncoder extends LinearOpMode {
+public class TestingEncoderBaz extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor BackRight = null;
@@ -69,6 +74,25 @@ public class TestingEncoder extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        // BAZ APRIL TAGS
+
+        AprilTagProcessor tagProcessor = new AprilTagProcessor.Builder()
+                .setDrawAxes(true)
+                .setDrawCubeProjection(true)
+                .setDrawTagID(true)
+                .setDrawTagOutline(true)
+                .build();
+
+        // vision portal
+        VisionPortal visionPortal = new VisionPortal.Builder()
+                .addProcessor(tagProcessor)
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCameraResolution(new Size(640, 480))
+                .build();
+        // END BAZ APRIL TAGS
+
+
         pos.startTime();
         telemetry.addData("Status", "Initializing...");
         telemetry.update();
@@ -102,7 +126,7 @@ public class TestingEncoder extends LinearOpMode {
         FrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        while (!colorSelected&&opModeInInit()) {
+        while (!colorSelected && opModeInInit()) {
             telemetry.addData("Status", "Input color, X for blue, B for red");
             telemetry.update();
             if (gamepad1.b) {
@@ -116,7 +140,7 @@ public class TestingEncoder extends LinearOpMode {
                 colorSelected = true;
             }
         }
-        while (!stageSelected&&opModeInInit()) {
+        while (!stageSelected && opModeInInit()) {
             telemetry.addData("Status", "Input stage position, Y for front stage, A for back stage");
             telemetry.update();
             if (gamepad1.y) {
@@ -130,77 +154,60 @@ public class TestingEncoder extends LinearOpMode {
                 stageSelected = true;
             }
         }
-        WebcamName camN = hardwareMap.get(WebcamName.class, "Webcam 1");
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
 
-        telemetry.addData("Status", "Waiting for start, Red: "+redSide+" Front: "+front);
-        telemetry.update();
-        cam = OpenCvCameraFactory.getInstance().createWebcam(camN, cameraMonitorViewId);
-
-        cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-            public void onOpened() {
-                cam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
-                telemetry.addData("CamStatus","Camera Opened");
-            }
-
-            public void onError(int errorCode) {
-                telemetry.addData("Error in OpenCV", errorCode);
-                telemetry.update();
-            }
-
-
-        });
         waitForStart();
-        cam.setPipeline(new PipelineRed(telemetry));
         sleep(1000);
 
-        while (opModeIsActive()&&!Moved) {
+        // MAIN LOOP
+        while (opModeIsActive() && !Moved) {
+            // BAZ APRIL TAGS
+            if (tagProcessor.getDetections().size() > 0) {
+                AprilTagDetection tag = tagProcessor.getDetections().get(0);
 
-                timeFrom.startTime();
-                AutoMove(pos.getPosition());
-                Moved = true;
+                telemetry.addData("x", tag.ftcPose.x); // left-right
+                telemetry.addData("y", tag.ftcPose.y); // front-back
+                telemetry.addData("z", tag.ftcPose.z); // up-down
+                telemetry.addData("pitch", tag.ftcPose.pitch);
+                telemetry.addData("roll", tag.ftcPose.roll);
+                telemetry.addData("yaw", tag.ftcPose.yaw);
+                telemetry.addData("range", tag.ftcPose.range);
+                telemetry.addData("bearing", tag.ftcPose.bearing);
+                telemetry.addData("elevation", tag.ftcPose.elevation);
+                telemetry.addData("id", tag.id);
 
+            }
+            telemetry.update();
+            // END BAZ APRIL TAGS
 
+            timeFrom.startTime();
+//            AutoMove(pos.getPosition());
+//            Moved = true;
 
         }
-        if(Moved) {
+
+        if (Moved) {
             if (cam != null) {
 
-               // cam.stopStreaming();
+                // cam.stopStreaming();
                 cam.closeCameraDevice();
 
             }
             super.stop();
         }
         telemetry.update();
-//       if(isStopRequested()){
-//           if (cam != null) {
-//               cam.closeCameraDevice();
-//              cam.stopStreaming();
-//
-//           }
-//
-//           // Additional cleanup if needed
-//
-//           super.stop();
-//       }
-
-
     }
-
-
 
 
     public void AutoMove(int location) {
         if (!Moved) {
-            if (redSide&&back) {//RedFrontStage
+            if (redSide && back) {//RedFrontStage
 
                 // DetectID = 477;
 
                 telemetry.addData("DETECT", location);
                 telemetry.update();
-                if (location ==1) {
+                if (location == 1) {
 
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
@@ -208,7 +215,7 @@ public class TestingEncoder extends LinearOpMode {
                     double distance1 = 20;
                     double adjust = .75;
                     double move1 = distance1 * adjust;
-                    encoderDrive(DRIVE_SPEED, 20 , 20 , 5.0);
+                    encoderDrive(DRIVE_SPEED, 20, 20, 5.0);
                     driveTurn(85, true, 1.0, 5.0);
                     encoderDrive(DRIVE_SPEED, -11 * .75, -10 * .75, 5.0);
 
@@ -253,7 +260,7 @@ public class TestingEncoder extends LinearOpMode {
                     Moved = true;
                     // break;
                 }
-                if (location ==2) {
+                if (location == 2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
@@ -290,7 +297,7 @@ public class TestingEncoder extends LinearOpMode {
                     //break;
 
                 }
-                if (location ==3) {
+                if (location == 3) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
@@ -333,7 +340,7 @@ public class TestingEncoder extends LinearOpMode {
                 Moved = true;
             }
             //  }
-            if (blueSide&back) {//blue back
+            if (blueSide && back) { //blue back // augie please
 
                 // DetectID = 477;
 
@@ -395,7 +402,7 @@ public class TestingEncoder extends LinearOpMode {
                 if (location == 2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
-                    encoderDrive(DRIVE_SPEED, 18 , 18 , 5.0);
+                    encoderDrive(DRIVE_SPEED, 18, 18, 5.0);
                     driveTurn(15, false, 1.0, 5.0);
                     ArmMotor.setPower(1);
                     sleep(2300);
@@ -414,7 +421,7 @@ public class TestingEncoder extends LinearOpMode {
                     driveTurn(75, true, 1.0, 5.0);
 
                     encoderDrive(DRIVE_SPEED, 40 * .75, 40 * .75, 5.0);
-                   // for worm: 1 unit = 2.25 degrees
+                    // for worm: 1 unit = 2.25 degrees
                     ArmServo.setPosition(.6);
                     sleep(1000);
                     ClawServoL.setPosition(.4);
@@ -466,15 +473,15 @@ public class TestingEncoder extends LinearOpMode {
                 Moved = true;
                 //}
             }
-            if (redSide &&front){
-                if (location==1){
+            if (redSide && front) {
+                if (location == 1) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     // driveTurn(45, false, 1.0, 5.0);
                     double distance1 = 20;
                     double adjust = .75;
                     double move1 = distance1 * adjust;
-                    encoderDrive(DRIVE_SPEED, 20 , 20 , 5.0);
+                    encoderDrive(DRIVE_SPEED, 20, 20, 5.0);
                     driveTurn(85, true, 1.0, 5.0);
                     encoderDrive(DRIVE_SPEED, -11 * .75, -10 * .75, 5.0);
 
@@ -486,9 +493,9 @@ public class TestingEncoder extends LinearOpMode {
                     sleep(2000);
                     ClawServoR.setPosition(.5);
                     sleep(500);
-                    Moved=true;
+                    Moved = true;
                 }
-                if (location==2){
+                if (location == 2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
@@ -499,9 +506,9 @@ public class TestingEncoder extends LinearOpMode {
                     ArmServo.setPosition(.6);
                     sleep(2300);
                     ClawServoR.setPosition(.5);
-                    Moved =true;
+                    Moved = true;
                 }
-                if (location==3){
+                if (location == 3) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
@@ -514,13 +521,13 @@ public class TestingEncoder extends LinearOpMode {
                     sleep(2000);
                     ClawServoR.setPosition(.5);
                     sleep(500);
-                    Moved =true;
+                    Moved = true;
                 }
 
 
             }
-            if (blueSide &&front){
-                if (location==1){
+            if (blueSide && front) {
+                if (location == 1) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     // driveTurn(45, false, 1.0, 5.0);
@@ -539,9 +546,9 @@ public class TestingEncoder extends LinearOpMode {
                     sleep(2000);
                     ClawServoR.setPosition(.5);
                     sleep(500);
-                    Moved=true;
+                    Moved = true;
                 }
-                if (location==2){
+                if (location == 2) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 18 * .75, 18 * .75, 5.0);
@@ -552,9 +559,9 @@ public class TestingEncoder extends LinearOpMode {
                     ArmServo.setPosition(.6);
                     sleep(2300);
                     ClawServoR.setPosition(.5);
-                    Moved =true;
+                    Moved = true;
                 }
-                if (location==3){
+                if (location == 3) {
                     ClawServoL.setPosition(-1);
                     ClawServoR.setPosition(1);
                     encoderDrive(DRIVE_SPEED, 20 * .75, 20 * .75, 5.0);
@@ -567,7 +574,7 @@ public class TestingEncoder extends LinearOpMode {
                     sleep(2000);
                     ClawServoR.setPosition(.5);
                     sleep(500);
-                    Moved=true;
+                    Moved = true;
                 }
             }
         }
@@ -621,6 +628,7 @@ public class TestingEncoder extends LinearOpMode {
         }
 
     }
+
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
@@ -698,158 +706,6 @@ public class TestingEncoder extends LinearOpMode {
 
 }
 
-class PipelineRed extends OpenCvPipeline {
-
-    private final Telemetry telemetry;
-
-    public PipelineRed(Telemetry telemetry) {
-        this.telemetry = telemetry;
-    }
-
-
-    Scalar lowerBoundBlue = new Scalar(50, 150, 100);
-    Scalar upperBoundBlue = new Scalar(255, 255, 130);
-    Scalar lowerBoundRed = new Scalar(37, 37, 70);
-    Scalar upperBoundRed = new Scalar(0, 85, 255);
-    Mat YCbCr = new Mat();
-    Mat leftCrop;
-    Mat rightCrop;
-    Mat centerCrop;
-    Mat output = new Mat();
-    Mat masks = new Mat();
-    Mat maty = new Mat();
-    Mat blueChannel = new Mat();
-    Mat redChannel = new Mat();
-    Scalar rectColor = new Scalar(255, 0, 0);
-
-    @Override
-    public Mat processFrame(Mat input) {
-        Imgproc.cvtColor(input, YCbCr, Imgproc.COLOR_BGR2YCrCb);
-
-        // Define the regions of interest
-        Rect leftR = new Rect(1, 1, 212, 479);
-        Rect centerR = new Rect(214, 1, 212, 479);
-        Rect rightR = new Rect(428, 1, 212, 479);
-
-        input.copyTo(output);
-        Imgproc.rectangle(output, leftR, rectColor, 2);
-        Imgproc.rectangle(output, centerR, rectColor, 2);
-        Imgproc.rectangle(output, rightR, rectColor, 2);
-
-        // Extract color information from the regions
-        leftCrop = YCbCr.submat(leftR);
-        centerCrop = YCbCr.submat(centerR);
-        rightCrop = YCbCr.submat(rightR);
-        int pixelCountLeft = 0;
-        int pixelCountCenter = 0;
-        int pixelCountRight = 0;
-//        if (TestingEncoder.redSide) {
-//             pixelCountLeft = countPixelsInRange(leftCrop, lowerBoundRed, upperBoundRed);
-//             pixelCountCenter = countPixelsInRange(centerCrop, lowerBoundRed, upperBoundRed);
-//             pixelCountRight = countPixelsInRange(rightCrop, lowerBoundRed, upperBoundRed);
-//        }
-//        if (TestingEncoder.blueSide) {
-            pixelCountLeft = countPixelsInRange(leftCrop, lowerBoundBlue, upperBoundBlue);
-            pixelCountCenter = countPixelsInRange(centerCrop, lowerBoundBlue, upperBoundBlue);
-            pixelCountRight = countPixelsInRange(rightCrop, lowerBoundBlue, upperBoundBlue);
-      //  }
-
-
-
-        // Print pixel counts for debugging using telemetry
-        telemetry.addData("Left pixels", pixelCountLeft);
-        telemetry.addData("Center pixels", pixelCountCenter);
-        telemetry.addData("Right pixels", pixelCountRight);
-        if (pixelCountLeft!=0||pixelCountCenter!=0||pixelCountRight!=0) {
-
-
-            // Determine position based on pixel counts
-            if (pixelCountLeft > pixelCountRight && pixelCountLeft > pixelCountCenter) {
-                telemetry.addData("OpenCV", "Right");
-                TestingEncoderBaz.pos.setPosition(3);
-                telemetry.addData("Position", "3");
-                TestingEncoderBaz.cam.closeCameraDevice();
-                telemetry.update();
-
-            } else if (pixelCountRight > pixelCountLeft && pixelCountRight > pixelCountCenter) {
-                telemetry.addData("OpenCV", "Left");
-                TestingEncoderBaz.pos.setPosition(1);
-                telemetry.addData("Position", "1");
-                telemetry.update();
-                TestingEncoderBaz.cam.closeCameraDevice();
-
-            } else if (pixelCountCenter > pixelCountLeft && pixelCountCenter > pixelCountRight) {
-                telemetry.addData("OpenCV", "Center");
-                TestingEncoderBaz.pos.setPosition(2);
-                telemetry.addData("Position", "2");
-            } else {
-                telemetry.addData("OpenCV", "None");
-                telemetry.addData("Position", "No position detected");
-            }
-        }
-        double avgLeft = 0;
-        double avgCenter = 0;
-        double avgRight = 0;
-
-        if (TestingEncoderBaz.redSide ) {
-            avgLeft = calculateAverageRed(leftCrop);
-             avgCenter = calculateAverageRed(centerCrop);
-             avgRight = calculateAverageRed(rightCrop);
-        }
-        if (TestingEncoderBaz.blueSide) {
-                avgLeft = calculateAverageBlue(leftCrop);
-                avgCenter = calculateAverageBlue(centerCrop);
-                avgRight = calculateAverageBlue(rightCrop);
-        }
-        telemetry.addData("Left avg", avgLeft);
-        telemetry.addData("Center avg", avgCenter);
-        telemetry.addData("Right avg", avgRight);
-        if(pixelCountLeft==0&&pixelCountCenter==0&&pixelCountRight==0){
-            if (avgLeft > avgRight && avgLeft > avgCenter) {
-                telemetry.addData("OpenCV", "Left");
-                TestingEncoderBaz.pos.setPosition(3);
-                System.out.println("Pos 3");
-            } else if (avgRight > avgLeft && avgRight > avgCenter) {
-                telemetry.addData("OpenCV", "Right");
-                TestingEncoderBaz.pos.setPosition(1);
-                System.out.println("Pos 1");
-            } else if (avgCenter > avgLeft && avgCenter > avgRight) {
-                telemetry.addData("OpenCV", "Center");
-                TestingEncoderBaz.pos.setPosition(2);
-                System.out.println("Pos 2");
-            } else {
-                telemetry.addData("OpenCV", "None");
-            }
-        }
-        telemetry.update();
-        TestingEncoderBaz.cam.closeCameraDevice();
-        return output;
-
-
-    }
 
 //method to count pixels in color range using openCv
 
-    private int countPixelsInRange(Mat mat, Scalar lowerBound, Scalar upperBound) {
-        Core.inRange(mat, lowerBound, upperBound, masks);
-
-        List<MatOfPoint> contours = new ArrayList<>();
-        Imgproc.findContours(masks, contours, maty, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        return contours.size();
-    }
-    private double calculateAverageBlue(Mat mat) {
-
-        Core.extractChannel(mat, blueChannel, 0); // Extract blue channel
-
-        Scalar mean = Core.mean(blueChannel);
-        return mean.val[0]; // Average blue value
-    }
-    private double calculateAverageRed(Mat mat) {
-
-        Core.extractChannel(mat, redChannel, 2); // Extract red channel
-
-        Scalar mean = Core.mean(redChannel);
-        return mean.val[0]; // Average red value
-    }
-}

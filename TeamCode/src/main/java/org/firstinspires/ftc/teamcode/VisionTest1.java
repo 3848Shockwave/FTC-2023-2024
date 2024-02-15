@@ -18,7 +18,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import android.util.Size;
 import java.util.List;
 
-@TeleOp(name = "Concept: AprilTag", group = "Concept")
+@TeleOp(name = "VisionTest1", group = "Concept")
 public class VisionTest1 extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;
